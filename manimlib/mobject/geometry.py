@@ -669,7 +669,7 @@ class Elbow(VMobject):
 
 class Arrow(Line):
     """
-    箭头
+    带箭头的直线
 
     和 ``Line`` 相同，箭头大小自动
         
@@ -677,7 +677,9 @@ class Arrow(Line):
     - ``max_tip_length_to_length_ratio`` : 箭头长度和直线长度最大比例（默认0.25）
     - ``max_stroke_width_to_length_ratio`` : 线条粗细和直线长度最大比例（默认5）
 
-    该类在 ``manimgl`` 版本中进行了重构，几乎变成了一个 7 边形，使用 ``add_tip`` 可能会导致箭头大小不统一
+    该类在 ``manimgl`` 版本中进行了重构，使用 ``add_tip`` 可能会导致箭头大小不统一
+
+    （grant又把箭头重写了一遍）
     """
 
     CONFIG = {
@@ -734,6 +736,7 @@ class Arrow(Line):
         return self
 
     def reset_tip(self):
+        '''重置箭头'''
         self.set_points_by_ends(
             self.get_start(),
             self.get_end(),
@@ -754,6 +757,7 @@ class Arrow(Line):
 
 
 class FillArrow(Line):
+    '''箭头，其本质是一个七边形'''
     CONFIG = {
         "fill_color": GREY_A,
         "fill_opacity": 1,
