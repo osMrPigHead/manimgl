@@ -50,6 +50,7 @@ class SVGMobject(VMobject):
     }
 
     def __init__(self, file_name=None, **kwargs):
+        """传入一个文件名指向输入的SVG文件"""
         digest_config(self, kwargs)
         self.file_name = file_name or self.file_name
         if file_name is None:
@@ -321,6 +322,7 @@ class SVGMobject(VMobject):
 
 
 class VMobjectFromSVGPathstring(VMobject):
+    """传入svg的path元素的字符串，得到一个由其生成的VMobject，即只处理path"""
     CONFIG = {
         "long_lines": False,
         "should_subdivide_sharp_curves": False,

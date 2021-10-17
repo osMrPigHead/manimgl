@@ -10,6 +10,7 @@ from manimlib.utils.iterables import listify
 
 
 class ImageMobject(Mobject):
+    '''图片物件'''
     CONFIG = {
         "height": 4,
         "opacity": 1,
@@ -22,6 +23,7 @@ class ImageMobject(Mobject):
     }
 
     def __init__(self, filename, **kwargs):
+        '''初始化输入的 ``filename`` 指向了图片文件的位置'''
         self.set_image_path(get_full_raster_image_path(filename))
         super().__init__(**kwargs)
 
@@ -48,6 +50,7 @@ class ImageMobject(Mobject):
         return self
 
     def point_to_rgb(self, point):
+        '''传入坐标，返回坐标对应点的 RGB 值'''
         x0, y0 = self.get_corner(UL)[:2]
         x1, y1 = self.get_corner(DR)[:2]
         x_alpha = inverse_interpolate(x0, x1, point[0])

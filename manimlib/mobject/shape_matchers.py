@@ -9,12 +9,16 @@ from manimlib.utils.config_ops import digest_config
 
 
 class SurroundingRectangle(Rectangle):
+    '''包围矩形框'''
     CONFIG = {
         "color": YELLOW,
         "buff": SMALL_BUFF,
     }
 
     def __init__(self, mobject, **kwargs):
+        '''
+        - ``buff`` : 矩形框与被包含物件的间隙
+        '''
         digest_config(self, kwargs)
         kwargs["width"] = mobject.get_width() + 2 * self.buff
         kwargs["height"] = mobject.get_height() + 2 * self.buff
@@ -23,6 +27,7 @@ class SurroundingRectangle(Rectangle):
 
 
 class BackgroundRectangle(SurroundingRectangle):
+    '''背景矩形框'''
     CONFIG = {
         "stroke_width": 0,
         "stroke_opacity": 0,
@@ -62,12 +67,16 @@ class BackgroundRectangle(SurroundingRectangle):
 
 
 class Cross(VGroup):
+    '''叉叉'''
     CONFIG = {
         "stroke_color": RED,
         "stroke_width": [0, 6, 0],
     }
 
     def __init__(self, mobject, **kwargs):
+        '''
+        - ``stroke_width`` : 叉叉线宽，默认两端细中间粗
+        '''
         super().__init__(
             Line(UL, DR),
             Line(UR, DL),
@@ -78,6 +87,7 @@ class Cross(VGroup):
 
 
 class Underline(Line):
+    '''下划线'''
     CONFIG = {
         "buff": SMALL_BUFF,
     }

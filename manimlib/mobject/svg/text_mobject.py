@@ -176,6 +176,7 @@ class Text(SVGMobject):
         """
         settings = []
         self.line_num = 0
+
         def add_text_settings(start, end, style_stacks):
             if start == end:
                 return
@@ -334,7 +335,7 @@ class MarkupText(SVGMobject):
         hasher = hashlib.sha256()
         hasher.update(id_str.encode())
         return hasher.hexdigest()[:16]
-    
+
     def text2svg(self):
         """Convert the text to SVG using Pango."""
         size = self.font_size
@@ -351,14 +352,14 @@ class MarkupText(SVGMobject):
         extra_kwargs['justify'] = self.justify
         extra_kwargs['pango_width'] = DEFAULT_PIXEL_WIDTH - 100
         if self.lsh:
-            extra_kwargs['line_spacing']=self.lsh
+            extra_kwargs['line_spacing'] = self.lsh
         return MarkupUtils.text2svg(
             f'<span foreground="{self.color}">{self.text}</span>',
             self.font,
             self.slant,
             self.weight,
             size,
-            0, # empty parameter
+            0,  # empty parameter
             disable_liga,
             file_name,
             START_X,
@@ -373,7 +374,7 @@ class MarkupText(SVGMobject):
         if re.match("#[0-9a-f]{6}", col):
             return col
         else:
-            return globals()[col.upper()] # this is hacky
+            return globals()[col.upper()]  # this is hacky
 
     @functools.lru_cache(10)
     def get_text_from_markup(self, element=None):
@@ -384,7 +385,7 @@ class MarkupText(SVGMobject):
             final_text += i
         return final_text
 
-    def extract_color_tags(self, text=None, colormap = None):
+    def extract_color_tags(self, text=None, colormap=None):
         """Used to determine which parts (if any) of the string should be formatted
         with a custom color.
         Removes the ``<color>`` tag, as it is not part of Pango's markup and would cause an error.
@@ -398,6 +399,7 @@ class MarkupText(SVGMobject):
         elements = ET.fromstring(text)
         text_from_markup = self.get_text_from_markup()
         final_xml = ET.fromstring(f'<span>{elements.text if elements.text else ""}</span>')
+
         def get_color_map(elements):
             for element in elements:
                 if element.tag == 'color':
@@ -416,7 +418,7 @@ class MarkupText(SVGMobject):
                             "end_offset": end_offset,
                         }
                     )
-                    
+
                     _elements_list = list(element.iter())
                     if len(_elements_list) <= 1:
                         final_xml.append(ET.fromstring(f'<span>{element.text if element.text else ""}</span>'))
@@ -427,16 +429,17 @@ class MarkupText(SVGMobject):
                         final_xml.append(element)
                     else:
                         get_color_map(element)
+
         get_color_map(elements)
         with io.BytesIO() as f:
-            tree = ET.ElementTree()  
+            tree = ET.ElementTree()
             tree._setroot(final_xml)
             tree.write(f)
             self.text = f.getvalue().decode()
-        self.text_for_parsing = self.text # gradients will use it
+        self.text_for_parsing = self.text  # gradients will use it
         return colormap
 
-    def extract_gradient_tags(self, text=None,gradientmap=None):
+    def extract_gradient_tags(self, text=None, gradientmap=None):
         """Used to determine which parts (if any) of the string should be formatted
         with a gradient.
         Removes the ``<gradient>`` tag, as it is not part of Pango's markup and would cause an error.
@@ -449,6 +452,7 @@ class MarkupText(SVGMobject):
         elements = ET.fromstring(text)
         text_from_markup = self.get_text_from_markup()
         final_xml = ET.fromstring(f'<span>{elements.text if elements.text else ""}</span>')
+
         def get_gradient_map(elements):
             for element in elements:
                 if element.tag == 'gradient':
@@ -478,9 +482,10 @@ class MarkupText(SVGMobject):
                         final_xml.append(element)
                     else:
                         get_gradient_map(element)
+
         get_gradient_map(elements)
         with io.BytesIO() as f:
-            tree = ET.ElementTree()  
+            tree = ET.ElementTree()
             tree._setroot(final_xml)
             tree.write(f)
             self.text = f.getvalue().decode()

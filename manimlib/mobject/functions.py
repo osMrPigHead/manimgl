@@ -4,6 +4,7 @@ from manimlib.utils.config_ops import digest_config
 
 
 class ParametricCurve(VMobject):
+    '''参数曲线'''
     CONFIG = {
         "t_range": [0, 1, 0.1],
         "epsilon": 1e-8,
@@ -13,6 +14,12 @@ class ParametricCurve(VMobject):
     }
 
     def __init__(self, t_func, t_range=None, **kwargs):
+        '''
+        传入 ``function`` 函数，自变量为参数 ``t`` ，返回值为一个三维点坐标
+    
+        - ``t_range=[t_mix, t_max, dt]`` : 参数范围
+        - ``discontinuities`` : 间断点列表
+        '''
         digest_config(self, kwargs)
         if t_range is not None:
             self.t_range[:len(t_range)] = t_range
@@ -26,6 +33,7 @@ class ParametricCurve(VMobject):
         VMobject.__init__(self, **kwargs)
 
     def get_point_from_function(self, t):
+        '''获取 t 值对应的点坐标'''
         return self.t_func(t)
 
     def init_points(self):
@@ -46,12 +54,18 @@ class ParametricCurve(VMobject):
 
 
 class FunctionGraph(ParametricCurve):
+    '''y-x 函数图像'''
     CONFIG = {
         "color": YELLOW,
         "x_range": [-8, 8, 0.25],
     }
 
     def __init__(self, function, x_range=None, **kwargs):
+        '''
+        传入 ``function`` 函数，自变量为 x ，返回值为 y
+    
+        - ``x_range=[x_mix, x_max, dx]`` 为自变量 x 的范围
+        '''
         digest_config(self, kwargs)
         self.function = function
 
@@ -64,7 +78,9 @@ class FunctionGraph(ParametricCurve):
         super().__init__(parametric_function, self.x_range, **kwargs)
 
     def get_function(self):
+        '''返回 y-x 函数'''
         return self.function
 
     def get_point_from_function(self, x):
+        '''给出一个横坐标 x ，返回图像上横坐标为 x 的点坐标'''
         return self.t_func(x)

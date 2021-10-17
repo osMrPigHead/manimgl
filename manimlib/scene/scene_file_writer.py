@@ -16,6 +16,7 @@ from manimlib.logger import log
 
 
 class SceneFileWriter(object):
+    '''将场景写入文件'''
     CONFIG = {
         "write_to_movie": False,
         "break_into_partial_movies": False,
@@ -135,6 +136,7 @@ class SceneFileWriter(object):
         )
 
     def add_sound(self, sound_file, time=None, gain=None, **kwargs):
+        '''添加声音'''
         file_path = get_full_sound_file_path(sound_file)
         new_segment = AudioSegment.from_file(file_path)
         if gain:
@@ -170,6 +172,7 @@ class SceneFileWriter(object):
             self.open_file()
 
     def open_movie_pipe(self, file_path):
+        '''开启视频管道'''
         stem, ext = os.path.splitext(file_path)
         self.final_file_path = file_path
         self.temp_file_path = stem + "_temp" + ext
@@ -206,17 +209,20 @@ class SceneFileWriter(object):
         self.writing_process = sp.Popen(command, stdin=sp.PIPE)
 
     def write_frame(self, camera):
+        '''写入视频帧'''
         if self.write_to_movie:
             raw_bytes = camera.get_raw_fbo_data()
             self.writing_process.stdin.write(raw_bytes)
 
     def close_movie_pipe(self):
+        '''关闭视频管道'''
         self.writing_process.stdin.close()
         self.writing_process.wait()
         self.writing_process.terminate()
         shutil.move(self.temp_file_path, self.final_file_path)
 
     def combine_movie_files(self):
+        '''拼接视频'''
         kwargs = {
             "remove_non_integer_files": True,
             "extension": self.movie_file_extension,
@@ -232,7 +238,7 @@ class SceneFileWriter(object):
             **kwargs
         )
         if len(partial_movie_files) == 0:
-            log.warning("No animations in this scene")
+            print("No animations in this scene")
             return
 
         # Write a file partial_file_list.txt containing all
@@ -265,6 +271,7 @@ class SceneFileWriter(object):
         combine_process.wait()
 
     def add_sound_to_video(self):
+        '''将声音合并入视频'''
         movie_file_path = self.get_movie_file_path()
         stem, ext = os.path.splitext(movie_file_path)
         sound_file_path = stem + ".wav"
@@ -296,12 +303,13 @@ class SceneFileWriter(object):
         os.remove(sound_file_path)
 
     def save_final_image(self, image):
+        '''保存视频最后一帧画面'''
         file_path = self.get_image_file_path()
         image.save(file_path)
         self.print_file_ready_message(file_path)
 
     def print_file_ready_message(self, file_path):
-        log.info(f"File ready at {file_path}")
+        print(f"\nFile ready at {file_path}\n")
 
     def should_open_file(self):
         return any([
@@ -310,6 +318,7 @@ class SceneFileWriter(object):
         ])
 
     def open_file(self):
+        '''写入完成后打开文件'''
         if self.quiet:
             curr_stdout = sys.stdout
             sys.stdout = open(os.devnull, "w")

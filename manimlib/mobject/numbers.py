@@ -8,6 +8,7 @@ string_to_mob_map = {}
 
 
 class DecimalNumber(VMobject):
+    '''十进制数'''
     CONFIG = {
         "stroke_width": 0,
         "fill_opacity": 1.0,
@@ -23,6 +24,12 @@ class DecimalNumber(VMobject):
     }
 
     def __init__(self, number=0, **kwargs):
+        '''
+        - ``num_decimal_places`` : 小数点位数
+        - ``unit`` : 单位符号
+        - ``show_ellipsis`` : 显示省略号
+        - ``group_with_commas`` : 3 位一组，用逗号隔开
+        '''
         super().__init__(**kwargs)
         self.set_submobjects_from_number(number)
         self.init_colors()
@@ -94,9 +101,11 @@ class DecimalNumber(VMobject):
 
     def get_formatter(self, **kwargs):
         """
-        Configuration is based first off instance attributes,
-        but overwritten by any kew word argument.  Relevant
-        key words:
+        配置基于第一个实例属性，但被任何关键字参数覆盖，相关参数如下（这句话看不懂，看下面的英文解释）
+
+        Configuration is based first off instance attributes, but overwritten by any key word argument. 
+        Relevant key words: 
+
         - include_sign
         - group_with_commas
         - num_decimal_places
@@ -129,6 +138,7 @@ class DecimalNumber(VMobject):
         ])
 
     def set_value(self, number):
+        '''设置数值'''
         move_to_point = self.get_edge_center(self.edge_to_fix)
         old_submobjects = list(self.submobjects)
         self.set_submobjects_from_number(number)
@@ -141,13 +151,16 @@ class DecimalNumber(VMobject):
         self.data["font_size"] *= scale_factor
 
     def get_value(self):
+        '''获取数值'''
         return self.number
 
     def increment_value(self, delta_t=1):
+        '''增加数值'''
         self.set_value(self.get_value() + delta_t)
 
 
 class Integer(DecimalNumber):
+    '''十进制整数'''
     CONFIG = {
         "num_decimal_places": 0,
     }

@@ -22,6 +22,7 @@ from manimlib.utils.space_ops import rotate_vector
 
 
 class Checkmark(TexText):
+    '''✔'''
     CONFIG = {
         "color": GREEN
     }
@@ -31,6 +32,7 @@ class Checkmark(TexText):
 
 
 class Exmark(TexText):
+    '''❌'''
     CONFIG = {
         "color": RED
     }
@@ -40,6 +42,7 @@ class Exmark(TexText):
 
 
 class Lightbulb(SVGMobject):
+    '''💡 无 SVG'''
     CONFIG = {
         "height": 1,
         "stroke_color": YELLOW,
@@ -53,6 +56,7 @@ class Lightbulb(SVGMobject):
 
 
 class Speedometer(VMobject):
+    '''汽车速度表盘'''
     CONFIG = {
         "arc_angle": 4 * np.pi / 3,
         "num_ticks": 8,
@@ -120,6 +124,7 @@ class Speedometer(VMobject):
 
 
 class Laptop(VGroup):
+    '''笔记本电脑'''
     CONFIG = {
         "width": 3,
         "body_dimensions": [4, 3, 0.05],
@@ -199,6 +204,7 @@ class Laptop(VGroup):
 
 
 class VideoIcon(SVGMobject):
+    '''视频播放按钮，无 SVG'''
     CONFIG = {
         "file_name": "video_icon",
         "width": FRAME_WIDTH / 12.,
@@ -213,6 +219,7 @@ class VideoIcon(SVGMobject):
 
 
 class VideoSeries(VGroup):
+    '''视频系列，无 SVG'''
     CONFIG = {
         "num_videos": 11,
         "gradient_colors": [BLUE_B, BLUE_D],
@@ -228,6 +235,7 @@ class VideoSeries(VGroup):
 
 
 class Clock(VGroup):
+    '''时钟'''
     CONFIG = {}
 
     def __init__(self, **kwargs):
@@ -256,6 +264,7 @@ class Clock(VGroup):
 
 
 class ClockPassesTime(Animation):
+    '''时钟前进'''
     CONFIG = {
         "run_time": 5,
         "hours_passed": 12,
@@ -263,6 +272,10 @@ class ClockPassesTime(Animation):
     }
 
     def __init__(self, clock, **kwargs):
+        '''
+        - ``hour_passed`` : 走过的时间
+        - ``run_time`` : 动画播放的时间
+        '''
         digest_config(self, kwargs)
         assert(isinstance(clock, Clock))
         rot_kwargs = {
@@ -290,6 +303,7 @@ class ClockPassesTime(Animation):
 
 
 class Bubble(SVGMobject):
+    '''气泡，无 SVG'''
     CONFIG = {
         "direction": LEFT,
         "center_point": ORIGIN,

@@ -2,6 +2,7 @@ import inspect
 import random
 import platform
 import itertools as it
+import logging
 from functools import wraps
 
 from tqdm import tqdm as ProgressDisplay
@@ -10,6 +11,7 @@ import time
 
 from manimlib.animation.animation import prepare_animation
 from manimlib.animation.transform import MoveToTarget
+from manimlib.mobject.mobject import Point
 from manimlib.camera.camera import Camera
 from manimlib.constants import DEFAULT_WAIT_TIME
 from manimlib.mobject.mobject import Mobject
@@ -24,6 +26,7 @@ from manimlib.logger import log
 
 
 class Scene(object):
+    '''场景类'''
     CONFIG = {
         "window_config": {},
         "camera_class": Camera,
@@ -40,6 +43,14 @@ class Scene(object):
     }
 
     def __init__(self, **kwargs):
+        '''
+        - ``window_config`` : 窗口参数
+        - ``camera_config`` : 相机参数
+        - ``file_writer_config`` : 文件写入参数
+        - ``start_at_animation_number`` : 在某个动画开始播放
+        - ``end_at_animation_number`` : 在某个动画结束播放
+        - ``preview`` : 是否为预览
+        '''
         digest_config(self, kwargs)
         if self.preview:
             from manimlib.window import Window
@@ -67,6 +78,7 @@ class Scene(object):
             np.random.seed(self.random_seed)
 
     def run(self):
+        '''场景运行'''
         self.virtual_animation_start_time = 0
         self.real_animation_start_time = time.time()
         self.file_writer.begin()
@@ -79,30 +91,25 @@ class Scene(object):
         self.tear_down()
 
     def setup(self):
-        """
-        This is meant to be implement by any scenes which
-        are comonly subclassed, and have some common setup
-        involved before the construct method is called.
-        """
+        """在 ``construct`` 被调用前执行"""
         pass
 
     def construct(self):
-        # Where all the animation happens
-        # To be implemented in subclasses
+        '''在此处写入所有动画，由子类重写'''
         pass
 
     def tear_down(self):
+        '''销毁场景'''
         self.stop_skipping()
         self.file_writer.finish()
         if self.window and self.linger_after_completion:
             self.interact()
 
     def interact(self):
+        '''交互'''
         # If there is a window, enter a loop
         # which updates the frame while under
         # the hood calling the pyglet event loop
-        log.info("Tips: You are now in the interactive mode. Now you can use the keyboard"
-            " and the mouse to interact with the scene. Just press `q` if you want to quit.")
         self.quit_interaction = False
         self.lock_static_mobject_data()
         while not (self.window.is_closing or self.quit_interaction):
@@ -113,6 +120,7 @@ class Scene(object):
             self.unlock_mobject_data()
 
     def embed(self):
+        '''使用 IPython 终端交互'''
         if not self.preview:
             # If the scene is just being
             # written, ignore embed calls
@@ -186,6 +194,7 @@ class Scene(object):
 
     # Related to time
     def get_time(self):
+        '''获取当前场景时间'''
         return self.time
 
     def increment_time(self, dt):
@@ -210,10 +219,7 @@ class Scene(object):
         return extract_mobject_family_members(self.mobjects)
 
     def add(self, *new_mobjects):
-        """
-        Mobjects will be displayed, from background to
-        foreground in the order with which they are added.
-        """
+        """将 Mobject 添加到场景中，后添加的会覆盖在上层"""
         self.remove(*new_mobjects)
         self.mobjects += new_mobjects
         return self
@@ -231,28 +237,34 @@ class Scene(object):
         return self
 
     def remove(self, *mobjects_to_remove):
+        '''从场景中移除某个指定的 Mobject '''
         self.mobjects = restructure_list_to_exclude_certain_family_members(
             self.mobjects, mobjects_to_remove
         )
         return self
 
     def bring_to_front(self, *mobjects):
+        '''移动到最上层'''
         self.add(*mobjects)
         return self
 
     def bring_to_back(self, *mobjects):
+        '''移动到下层'''
         self.remove(*mobjects)
         self.mobjects = list(mobjects) + self.mobjects
         return self
 
     def clear(self):
+        '''清空场景'''
         self.mobjects = []
         return self
 
     def get_mobjects(self):
+        '''获取场景中的物件'''
         return list(self.mobjects)
 
     def get_mobject_copies(self):
+        '''获取场景中物件的拷贝'''
         return [m.copy() for m in self.mobjects]
 
     def point_to_mobject(self, point, search_set=None, buff=0):
@@ -300,6 +312,7 @@ class Scene(object):
         return np.max([animation.run_time for animation in animations])
 
     def get_animation_time_progression(self, animations):
+        '''获取动画进度条，在此过程中播放动画'''
         run_time = self.get_run_time(animations)
         time_progression = self.get_time_progression(run_time)
         time_progression.set_description("".join([
@@ -309,6 +322,7 @@ class Scene(object):
         return time_progression
 
     def get_wait_time_progression(self, duration, stop_condition):
+        '''获取等待进度条，在此过程中播放等待动画'''
         if stop_condition is not None:
             time_progression = self.get_time_progression(
                 duration,
@@ -327,14 +341,19 @@ class Scene(object):
 
     def anims_from_play_args(self, *args, **kwargs):
         """
-        Each arg can either be an animation, or a mobject method
-        followed by that methods arguments (and potentially follow
-        by a dict of kwargs for that method).
-        This animation list is built by going through the args list,
-        and each animation is simply added, but when a mobject method
-        s hit, a MoveToTarget animation is built using the args that
-        follow up until either another animation is hit, another method
-        is hit, or the args list runs out.
+        每个 arg 可以是一个 **动画的实例**，也可以是一个 **mobject 的方法**，后面的 kwargs 
+        即为这个方法所包含的参数，可以以字典的形式给出
+
+        这一系列动画会通过参数列表 args 编译
+
+        - 如果是 **动画实例**，则会直接添加到 **动画列表** 中
+        - 如果是一个 **mobject 的方法**，则会将它包装成 ``MoveToTarget`` 实例，其中的参数即为后面的字典或参数
+            - 直至读取到下一个动画实例，或是下一个 mobject 的方法之前，都是上面一个 ``MoveToTarget`` 的参数
+        - 或者采用 `ManimCommunity <https://manim.community>`_ 编写的 ``Mobject.animate`` 
+          方法，采用链式操作，将一连串方法编译成一个 ``MoveToTarget``，详见 :class:`manimlib.mobject.mobject._AnimationBuilder`
+
+        一般我们采用 ``Scene.play`` 方法，而不是这个，因为 ``play`` 方法包装得更全面，而 
+        ``anims_from_play_args`` 这个方法只是 ``play`` 中的一部分
         """
         animations = []
         state = {
@@ -462,6 +481,7 @@ class Scene(object):
 
     @handle_play_like_call
     def play(self, *args, **kwargs):
+        '''播放动画'''
         if len(args) == 0:
             log.warning("Called Scene.play with no animations")
             return
@@ -474,6 +494,7 @@ class Scene(object):
 
     @handle_play_like_call
     def wait(self, duration=DEFAULT_WAIT_TIME, stop_condition=None):
+        '''等待一段时间'''
         self.update_mobjects(dt=0)  # Any problems with this?
         if self.should_update_mobjects():
             self.lock_static_mobject_data()
@@ -512,6 +533,7 @@ class Scene(object):
         return self
 
     def add_sound(self, sound_file, time_offset=0, gain=None, **kwargs):
+        '''添加声音'''
         if self.skip_animations:
             return
         time = self.get_time() + time_offset
@@ -519,6 +541,7 @@ class Scene(object):
 
     # Helpers for interactive development
     def save_state(self):
+        '''保存场景当前状态'''
         self.saved_state = {
             "mobjects": self.mobjects,
             "mobject_states": [
@@ -528,6 +551,7 @@ class Scene(object):
         }
 
     def restore(self):
+        '''将场景恢复到保存的状态'''
         if not hasattr(self, "saved_state"):
             raise Exception("Trying to restore scene without having saved")
         mobjects = self.saved_state["mobjects"]
@@ -539,6 +563,7 @@ class Scene(object):
     # Event handling
 
     def on_mouse_motion(self, point, d_point):
+        '''鼠标移动事件'''
         self.mouse_point.move_to(point)
 
         event_data = {"point": point, "d_point": d_point}
@@ -559,6 +584,7 @@ class Scene(object):
             frame.shift(shift)
 
     def on_mouse_drag(self, point, d_point, buttons, modifiers):
+        '''鼠标拖拽事件'''
         self.mouse_drag_point.move_to(point)
 
         event_data = {"point": point, "d_point": d_point, "buttons": buttons, "modifiers": modifiers}
@@ -567,18 +593,21 @@ class Scene(object):
             return
 
     def on_mouse_press(self, point, button, mods):
+        '''鼠标按下事件'''
         event_data = {"point": point, "button": button, "mods": mods}
         propagate_event = EVENT_DISPATCHER.dispatch(EventType.MousePressEvent, **event_data)
         if propagate_event is not None and propagate_event is False:
             return
 
     def on_mouse_release(self, point, button, mods):
+        '''鼠标弹起事件'''
         event_data = {"point": point, "button": button, "mods": mods}
         propagate_event = EVENT_DISPATCHER.dispatch(EventType.MouseReleaseEvent, **event_data)
         if propagate_event is not None and propagate_event is False:
             return
 
     def on_mouse_scroll(self, point, offset):
+        '''鼠标滚轮滚动事件'''
         event_data = {"point": point, "offset": offset}
         propagate_event = EVENT_DISPATCHER.dispatch(EventType.MouseScrollEvent, **event_data)
         if propagate_event is not None and propagate_event is False:
@@ -594,12 +623,14 @@ class Scene(object):
             frame.shift(-20.0 * shift)
 
     def on_key_release(self, symbol, modifiers):
+        '''键盘释放事件'''
         event_data = {"symbol": symbol, "modifiers": modifiers}
         propagate_event = EVENT_DISPATCHER.dispatch(EventType.KeyReleaseEvent, **event_data)
         if propagate_event is not None and propagate_event is False:
             return
 
     def on_key_press(self, symbol, modifiers):
+        '''键盘按下事件'''
         try:
             char = chr(symbol)
         except OverflowError:
@@ -617,6 +648,7 @@ class Scene(object):
             self.quit_interaction = True
 
     def on_resize(self, width: int, height: int):
+        '''窗口缩放事件'''
         self.camera.reset_pixel_shape(width, height)
 
     def on_show(self):

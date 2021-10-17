@@ -7,6 +7,7 @@ from manimlib.utils.iterables import resize_array
 
 
 class PMobject(Mobject):
+    '''点物件'''
     CONFIG = {
         "opacity": 1.0,
     }
@@ -27,7 +28,7 @@ class PMobject(Mobject):
 
     def add_points(self, points, rgbas=None, color=None, opacity=None):
         """
-        points must be a Nx3 numpy array, as must rgbas if it is not None
+        添加点，点必须是若干个三维坐标，即 Nx3 的数组
         """
         self.append_points(points)
         # rgbas array will have been resized with points
@@ -68,7 +69,7 @@ class PMobject(Mobject):
 
     def sort_points(self, function=lambda p: p[0]):
         """
-        function is any map from R^3 to R
+        按照传入的函数对点进行排序，函数接受一个 **三维** 坐标，返回一个数值
         """
         for mob in self.family_members_with_points():
             indices = np.argsort(
@@ -87,10 +88,12 @@ class PMobject(Mobject):
         return self
 
     def point_from_proportion(self, alpha):
+        '''获取点集上百分比为 alpha 的最接近的点'''
         index = alpha * (self.get_num_points() - 1)
         return self.get_points()[int(index)]
 
     def pointwise_become_partial(self, pmobject, a, b):
+        '''获取点集上百分比从 a 到 b 的点'''
         lower_index = int(a * pmobject.get_num_points())
         upper_index = int(b * pmobject.get_num_points())
         for key in self.data:
@@ -101,6 +104,7 @@ class PMobject(Mobject):
 
 
 class PGroup(PMobject):
+    '''点集组合'''
     def __init__(self, *pmobs, **kwargs):
         if not all([isinstance(m, PMobject) for m in pmobs]):
             raise Exception("All submobjects must be of type PMobject")
@@ -108,6 +112,7 @@ class PGroup(PMobject):
 
 
 class Point(PMobject):
+    '''单个点（似乎和 Mobject 中的 Point 类冲突了）'''
     CONFIG = {
         "color": BLACK,
     }

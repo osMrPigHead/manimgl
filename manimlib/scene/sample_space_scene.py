@@ -9,11 +9,14 @@ from manimlib.mobject.types.vectorized_mobject import VGroup
 
 
 class SampleSpaceScene(Scene):
+    '''可视化样本空间场景'''
     def get_sample_space(self, **config):
+        '''获取样本空间'''
         self.sample_space = SampleSpace(**config)
         return self.sample_space
 
     def add_sample_space(self, **config):
+        '''添加样本空间'''
         self.add(self.get_sample_space(**config))
 
     def get_division_change_animations(

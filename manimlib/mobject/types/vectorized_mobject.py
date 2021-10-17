@@ -71,6 +71,24 @@ class VMobject(Mobject):
     }
 
     def __init__(self, **kwargs):
+        """ 初始化样式，VMobject 的样式有以下
+
+        - ``fill`` 填充样式
+
+          - 颜色: ``fill_color`` 或 ``color``
+          - 不透明度: ``fill_opacity``
+
+        - ``stroke`` 线条样式
+
+          - 颜色: ``stroke_color`` 或 ``color``
+          - 宽度: ``stroke_width``
+          - 不透明度: ``stroke_opacity``
+          
+        - ``gloss`` 光泽
+        - ``shadow`` 阴影
+
+        其中，opacity, width 等属性均可以为一个列表，在渲染时会按照列表对其进行补间
+        """
         self.needs_new_triangulation = True
         self.triangulation = np.zeros(0, dtype='i4')
         super().__init__(**kwargs)
@@ -116,10 +134,12 @@ class VMobject(Mobject):
         return self
 
     def set_fill(self, color=None, opacity=None, recurse=True):
+        '''设置填充色'''
         self.set_rgba_array_by_color(color, opacity, 'fill_rgba', recurse)
         return self
 
     def set_stroke(self, color=None, width=None, opacity=None, background=None, recurse=True):
+        '''设置轮廓线'''
         self.set_rgba_array_by_color(color, opacity, 'stroke_rgba', recurse)
 
         if width is not None:
@@ -153,6 +173,7 @@ class VMobject(Mobject):
                   gloss=None,
                   shadow=None,
                   recurse=True):
+        '''整体设置样式'''
         if fill_rgba is not None:
             self.data['fill_rgba'] = resize_with_interpolation(fill_rgba, len(fill_rgba))
         else:
@@ -184,6 +205,7 @@ class VMobject(Mobject):
         return self
 
     def get_style(self):
+        '''获取样式字典'''
         return {
             "fill_rgba": self.data['fill_rgba'],
             "stroke_rgba": self.data['stroke_rgba'],
@@ -194,6 +216,7 @@ class VMobject(Mobject):
         }
 
     def match_style(self, vmobject, recurse=True):
+        '''将自身样式与 ``vmobject`` 匹配'''
         self.set_style(**vmobject.get_style(), recurse=False)
         if recurse:
             # Does its best to match up submobject lists, and
@@ -208,11 +231,13 @@ class VMobject(Mobject):
         return self
 
     def set_color(self, color, recurse=True):
+        '''设置颜色'''
         self.set_fill(color, recurse=recurse)
         self.set_stroke(color, recurse=recurse)
         return self
 
     def set_opacity(self, opacity, recurse=True):
+        '''设置透明度'''
         self.set_fill(opacity=opacity, recurse=recurse)
         self.set_stroke(opacity=opacity, recurse=recurse)
         return self
@@ -255,15 +280,17 @@ class VMobject(Mobject):
     # rather than the full information
     def get_fill_color(self):
         """
-        If there are multiple colors (for gradient)
-        this returns the first one
+        获取填充色
+
+        如果是渐变染色,则只会返回颜色列表的第一个
         """
         return self.get_fill_colors()[0]
 
     def get_fill_opacity(self):
         """
-        If there are multiple opacities, this returns the
-        first
+        获取透明度
+
+        如果是渐变透明度,则只会返回透明度列表的第一个
         """
         return self.get_fill_opacities()[0]
 
@@ -302,6 +329,7 @@ class VMobject(Mobject):
 
     # Points
     def set_anchors_and_handles(self, anchors1, handles, anchors2):
+        '''设置二阶贝塞尔曲线的锚点和手柄'''
         assert(len(anchors1) == len(handles) == len(anchors2))
         nppc = self.n_points_per_curve
         new_points = np.zeros((nppc * len(anchors1), self.dim))
@@ -312,6 +340,7 @@ class VMobject(Mobject):
         return self
 
     def start_new_path(self, point):
+        '''开启一个新的路径'''
         assert(self.get_num_points() % self.n_points_per_curve == 0)
         self.append_points([point])
         return self
@@ -322,7 +351,7 @@ class VMobject(Mobject):
 
     def add_cubic_bezier_curve_to(self, handle1, handle2, anchor):
         """
-        Add cubic bezier curve to the path.
+        添加一条三阶贝塞尔曲线（可能不准）
         """
         self.throw_error_if_no_points()
         quadratic_approx = get_quadratic_approximation_of_cubic(
@@ -334,6 +363,7 @@ class VMobject(Mobject):
             self.append_points(quadratic_approx)
 
     def add_quadratic_bezier_curve_to(self, handle, anchor):
+        '''添加一条二阶贝塞尔曲线'''
         self.throw_error_if_no_points()
         if self.has_new_path_started():
             self.append_points([handle, anchor])
@@ -341,6 +371,7 @@ class VMobject(Mobject):
             self.append_points([self.get_last_point(), handle, anchor])
 
     def add_line_to(self, point):
+        '''添加一条直线'''
         end = self.get_points()[-1]
         alphas = np.linspace(0, 1, self.n_points_per_curve)
         if self.long_lines:
@@ -363,6 +394,7 @@ class VMobject(Mobject):
         return self
 
     def add_smooth_curve_to(self, point):
+        '''添加一条平滑的曲线'''
         if self.has_new_path_started():
             self.add_line_to(point)
         else:
@@ -380,6 +412,7 @@ class VMobject(Mobject):
         return self.get_num_points() % self.n_points_per_curve == 1
 
     def get_last_point(self):
+        '''获取路径最后一个锚点'''
         return self.get_points()[-1]
 
     def get_reflection_of_last_handle(self):
@@ -387,10 +420,12 @@ class VMobject(Mobject):
         return 2 * points[-1] - points[-2]
 
     def close_path(self):
+        '''用直线闭合该曲线'''
         if not self.is_closed():
             self.add_line_to(self.get_subpaths()[-1][0])
 
     def is_closed(self):
+        '''判断曲线是否闭合'''
         return self.consider_points_equals(
             self.get_points()[0], self.get_points()[-1]
         )
@@ -419,6 +454,7 @@ class VMobject(Mobject):
         return points
 
     def set_points_as_corners(self, points):
+        '''传入一个 Nx3 的数组，绘制顺序连接的折线'''
         nppc = self.n_points_per_curve
         points = np.array(points)
         self.set_anchors_and_handles(*[
@@ -428,6 +464,7 @@ class VMobject(Mobject):
         return self
 
     def set_points_smoothly(self, points, true_smooth=False):
+        '''用平滑的曲线连接传入的系列点'''
         self.set_points_as_corners(points)
         if true_smooth:
             self.make_smooth()
@@ -436,6 +473,12 @@ class VMobject(Mobject):
         return self
 
     def change_anchor_mode(self, mode):
+        '''改变曲线连接模式
+
+        - ``jagged`` : 折线
+        - ``approx_smooth`` : 大致平滑
+        - ``true_smooth`` : 真正平滑
+        '''
         assert(mode in ("jagged", "approx_smooth", "true_smooth"))
         nppc = self.n_points_per_curve
         for submob in self.family_members_with_points():
@@ -457,26 +500,28 @@ class VMobject(Mobject):
 
     def make_smooth(self):
         """
-        This will double the number of points in the mobject,
-        so should not be called repeatedly.  It also means
-        transforming between states before and after calling
-        this might have strange artifacts
+        使曲线变平滑
+
+        这个方法会使得锚点数量加倍，所以 **不要重复使用**，否则锚点数量会 **指数爆炸**
+
+        同时，应用 Transform 时有可能会出现奇怪的曲线
         """
         self.change_anchor_mode("true_smooth")
         return self
 
     def make_approximately_smooth(self):
         """
-        Unlike make_smooth, this will not change the number of
-        points, but it also does not result in a perfectly smooth
-        curve.  It's most useful when the points have been
-        sampled at a not-too-low rate from a continuous function,
-        as in the case of ParametricCurve
+        使曲线变得大致平滑
+
+        这个方法不像 ``make_smooth``，本方法不会使锚点数量加倍，与此同时带来了无法达到完美平滑的问题
+
+        但是这个方法在锚点采样间隔较小时会有比较好的效果，所以有时会更实用
         """
         self.change_anchor_mode("approx_smooth")
         return self
 
     def make_jagged(self):
+        '''使曲线模式变为折线'''
         self.change_anchor_mode("jagged")
         return self
 
@@ -497,6 +542,7 @@ class VMobject(Mobject):
 
     #
     def consider_points_equals(self, p0, p1):
+        '''判断两点是否大致重合'''
         return get_norm(p1 - p0) < self.tolerance_for_point_equality
 
     # Information about the curve
@@ -533,17 +579,21 @@ class VMobject(Mobject):
         return self.get_subpaths_from_points(self.get_points())
 
     def get_nth_curve_points(self, n):
+        '''获取组成曲线的第 n 条贝塞尔曲线的锚点'''
         assert(n < self.get_num_curves())
         nppc = self.n_points_per_curve
         return self.get_points()[nppc * n:nppc * (n + 1)]
 
     def get_nth_curve_function(self, n):
+        '''获取组成曲线的第 n 条贝塞尔曲线函数'''
         return bezier(self.get_nth_curve_points(n))
 
     def get_num_curves(self):
+        '''获取组成曲线的贝塞尔曲线数量'''
         return self.get_num_points() // self.n_points_per_curve
 
     def point_from_proportion(self, alpha):
+        """在整条路径上占比为 alpha 处的点"""
         num_curves = self.get_num_curves()
         n, residue = integer_interpolate(0, num_curves, alpha)
         curve_func = self.get_nth_curve_function(n)
@@ -551,10 +601,7 @@ class VMobject(Mobject):
 
     def get_anchors_and_handles(self):
         """
-        returns anchors1, handles, anchors2,
-        where (anchors1[i], handles[i], anchors2[i])
-        will be three points defining a quadratic bezier curve
-        for any i in range(0, len(anchors1))
+        获取二阶贝塞尔曲线的锚点和手柄
         """
         nppc = self.n_points_per_curve
         points = self.get_points()
@@ -600,10 +647,7 @@ class VMobject(Mobject):
         return norms.sum()
 
     def get_area_vector(self):
-        # Returns a vector whose length is the area bound by
-        # the polygon formed by the anchor points, pointing
-        # in a direction perpendicular to the polygon according
-        # to the right hand rule.
+        '''返回一个向量，其长度为锚点形成的多边形所围成的面积，根据右手定则指向垂直于该多边形的方向。'''
         if not self.has_points():
             return np.zeros(3)
 
@@ -620,6 +664,7 @@ class VMobject(Mobject):
         ])
 
     def get_unit_normal(self, recompute=False):
+        '''获取单位法向量'''
         if not recompute:
             return self.data["unit_normal"][0]
 
@@ -644,6 +689,7 @@ class VMobject(Mobject):
 
     # Alignment
     def align_points(self, vmobject):
+        '''对齐锚点，主要用于 Transform 的内部实现'''
         if self.get_num_points() == len(vmobject.get_points()):
             return
 
@@ -687,6 +733,7 @@ class VMobject(Mobject):
         return self
 
     def insert_n_curves(self, n, recurse=True):
+        '''将物件切割成 n 个小段的拼接，常用于复杂函数变换'''
         for mob in self.get_family(recurse):
             if mob.get_num_curves() > 0:
                 new_points = mob.insert_n_curves_to_point_list(n, mob.get_points())
@@ -730,6 +777,7 @@ class VMobject(Mobject):
         return np.vstack(new_points)
 
     def interpolate(self, mobject1, mobject2, alpha, *args, **kwargs):
+        '''mobject1 到 mobject2 百分比为 alpha 的补间'''
         super().interpolate(mobject1, mobject2, alpha, *args, **kwargs)
         if self.has_fill():
             tri1 = mobject1.get_triangulation()
@@ -739,6 +787,7 @@ class VMobject(Mobject):
         return self
 
     def pointwise_become_partial(self, vmobject, a, b):
+        '''返回 vmobject 上百分比从 a 到 b 的部分曲线的拷贝'''
         assert(isinstance(vmobject, VMobject))
         if a <= 0 and b >= 1:
             self.become(vmobject)
@@ -781,6 +830,7 @@ class VMobject(Mobject):
         return self
 
     def get_subcurve(self, a, b):
+        '''获取路径上百分比为 a 到 b 的部分'''
         vmob = self.copy()
         vmob.pointwise_become_partial(self, a, b)
         return vmob
@@ -788,6 +838,7 @@ class VMobject(Mobject):
     # Related to triangulation
 
     def refresh_triangulation(self):
+        '''重置三角剖分'''
         for mob in self.get_family():
             mob.needs_new_triangulation = True
         return self
@@ -862,6 +913,7 @@ class VMobject(Mobject):
 
     @triggers_refreshed_triangulation
     def set_points(self, points):
+        '''设置物件的锚点，传入的数组必须为 Nx3'''
         super().set_points(points)
         return self
 
@@ -873,12 +925,14 @@ class VMobject(Mobject):
     # TODO, how to be smart about tangents here?
     @triggers_refreshed_triangulation
     def apply_function(self, function, make_smooth=False, **kwargs):
+        '''对物件执行 function 函数'''
         super().apply_function(function, **kwargs)
         if self.make_smooth_after_applying_functions or make_smooth:
             self.make_approximately_smooth()
         return self
 
     def flip(self, *args, **kwargs):
+        '''绕 axis 轴翻转'''
         super().flip(*args, **kwargs)
         self.refresh_unit_normal()
         self.refresh_triangulation()
@@ -993,6 +1047,7 @@ class VMobject(Mobject):
 
 
 class VGroup(VMobject):
+    """和 ``VMobject`` 相同，主要用作包含一些子物体（必须都是 VMobject）"""
     def __init__(self, *vmobjects, **kwargs):
         if not all([isinstance(m, VMobject) for m in vmobjects]):
             raise Exception("All submobjects must be of type VMobject")
@@ -1001,6 +1056,7 @@ class VGroup(VMobject):
 
 
 class VectorizedPoint(Point, VMobject):
+    """以 VMobject 形式存在的单个点"""
     CONFIG = {
         "color": BLACK,
         "fill_opacity": 0,
@@ -1015,6 +1071,7 @@ class VectorizedPoint(Point, VMobject):
 
 
 class CurvesAsSubmobjects(VGroup):
+    """传入一个 VMobject 实例（物体），将其所有段曲线作为子物体（一个子物体为一条曲线）"""
     def __init__(self, vmobject, **kwargs):
         super().__init__(**kwargs)
         for tup in vmobject.get_bezier_tuples():
@@ -1025,6 +1082,11 @@ class CurvesAsSubmobjects(VGroup):
 
 
 class DashedVMobject(VMobject):
+    """ 传入一个 VMobject 实例（物体），将其所有曲线全部设为虚线
+    
+    - 传入 ``num_dashed`` 表示分为多少段虚线
+    - 传入 ``positive_space_ratio`` 表示虚实比例
+    """
     CONFIG = {
         "num_dashes": 15,
         "positive_space_ratio": 0.5,

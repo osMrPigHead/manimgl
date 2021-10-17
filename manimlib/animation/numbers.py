@@ -20,6 +20,7 @@ class ChangingDecimal(Animation):
 
 
 class ChangeDecimalToValue(ChangingDecimal):
+    '''从当前数字播放到目标数字'''
     def __init__(self, decimal_mob, target_number, **kwargs):
         start_number = decimal_mob.number
         super().__init__(
@@ -30,6 +31,7 @@ class ChangeDecimalToValue(ChangingDecimal):
 
 
 class CountInFrom(ChangingDecimal):
+    '''从 source_number 开始播放到当前数字'''
     def __init__(self, decimal_mob, source_number=0, **kwargs):
         start_number = decimal_mob.number
         super().__init__(

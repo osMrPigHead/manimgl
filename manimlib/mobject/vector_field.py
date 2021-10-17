@@ -86,6 +86,7 @@ def get_sample_points_from_coordinate_system(coordinate_system, step_multiple):
 # Mobjects
 
 class VectorField(VGroup):
+    """向量场"""
     CONFIG = {
         "step_multiple": 0.5,
         "magnitude_range": (0, 2),
@@ -97,6 +98,17 @@ class VectorField(VGroup):
     }
 
     def __init__(self, func, coordinate_system, **kwargs):
+        """传入的 ``func`` 自变量为 x 和 y，返回值为与 x 和 y 相关的二元组
+        
+        向量将会被绘制在 ``coordinate_system`` 中
+
+        - ``magnitude_range`` : 用于梯度颜色的范围
+        - ``color_map`` : 颜色梯度范围，默认为 ``3b1b_colormap``
+        - ``length_func`` : 映射向量长度的函数，可改为 ``linear`` 表示原长
+        - ``vector_config`` : 每个向量的属性设置
+
+        初始化之后为一系列向量
+        """
         super().__init__(**kwargs)
         self.func = func
         self.coordinate_system = coordinate_system
@@ -137,6 +149,7 @@ class VectorField(VGroup):
 
 
 class StreamLines(VGroup):
+    """流线"""
     CONFIG = {
         "step_multiple": 0.5,
         "n_repeats": 1,
@@ -158,6 +171,20 @@ class StreamLines(VGroup):
     }
 
     def __init__(self, func, coordinate_system, **kwargs):
+        """传入的 ``func`` 自变量为 x 和 y，返回值为与 x 和 y 相关的二元组
+
+        随机生成一系列起点，并且根据 func 流动形成图形，绘制在 ``coordinate_system`` 中
+        
+        - ``dt`` : 每次流动的时间（默认为 0.05）
+        - ``arc_len`` : 弧线长度
+        - ``max_time_steps`` : 最大流动步数
+        - ``n_samples_per_line`` : 每条线的采样数
+        - ``color_by_magnitude`` : 根据距离上色
+          - ``magnitude_range`` : 距离范围
+        
+        - ``color_map`` : 颜色梯度的范围，默认为 ``3b1b_colormap``
+        - ``cutoff_norm`` : 运行每条流线的最大长度
+        """
         super().__init__(**kwargs)
         self.func = func
         self.coordinate_system = coordinate_system
@@ -237,6 +264,7 @@ class StreamLines(VGroup):
 
 
 class AnimatedStreamLines(VGroup):
+    """自动实现流动效果的物体（利用 ``StreamLines`` 和转化为 ``updater`` 的动画）"""
     CONFIG = {
         "lag_range": 4,
         "line_anim_class": VShowPassingFlash,
@@ -248,6 +276,12 @@ class AnimatedStreamLines(VGroup):
     }
 
     def __init__(self, stream_lines, **kwargs):
+        """传入的 ``stream_lines`` 为一个 ``StreamLines`` 实例
+        
+        - ``lag_range`` : 延迟的范围
+        - ``line_anim_class`` : 对每条线执行的动画，默认为 ``ShowPassingFlash``
+        - ``line_anim_config`` : 对每条线执行动画的属性设置
+        """
         super().__init__(**kwargs)
         self.stream_lines = stream_lines
         for line in stream_lines:
@@ -272,6 +306,9 @@ class AnimatedStreamLines(VGroup):
 
 # TODO: This class should be deleted
 class ShowPassingFlashWithThinningStrokeWidth(AnimationGroup):
+    """通过改变线条宽度来实现流动效果
+
+    注意：该类将被删除"""
     CONFIG = {
         "n_segments": 10,
         "time_width": 0.1,
@@ -279,6 +316,7 @@ class ShowPassingFlashWithThinningStrokeWidth(AnimationGroup):
     }
 
     def __init__(self, vmobject, **kwargs):
+        """传入的 ``vmobject`` 表示需要显示流动效果的物体（一般是 ``StreamLines`` ）"""
         digest_config(self, kwargs)
         max_stroke_width = vmobject.get_stroke_width()
         max_time_width = kwargs.pop("time_width", self.time_width)

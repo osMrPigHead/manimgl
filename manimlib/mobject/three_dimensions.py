@@ -13,6 +13,7 @@ from manimlib.utils.space_ops import compass_directions
 
 
 class SurfaceMesh(VGroup):
+    '''表面网格'''
     CONFIG = {
         "resolution": (21, 21),
         "stroke_width": 1,
@@ -22,6 +23,10 @@ class SurfaceMesh(VGroup):
     }
 
     def __init__(self, uv_surface, **kwargs):
+        '''传入一个关于 ``u, v`` 的参数方程
+
+        - ``resolution`` : 分割精度
+        '''
         if not isinstance(uv_surface, Surface):
             raise Exception("uv_surface must be of type Surface")
         self.uv_surface = uv_surface
@@ -54,6 +59,11 @@ class SurfaceMesh(VGroup):
 # 3D shapes
 
 class Sphere(Surface):
+    '''球
+
+    - ``radius`` : 半径
+    - ``resolution`` : 分割精度
+    '''
     CONFIG = {
         "resolution": (101, 51),
         "radius": 1,
@@ -70,6 +80,10 @@ class Sphere(Surface):
 
 
 class Torus(Surface):
+    '''环面
+    
+    - ``r1`` : 外半径
+    - ``r2`` : 内半径'''
     CONFIG = {
         "u_range": (0, TAU),
         "v_range": (0, TAU),
@@ -83,6 +97,11 @@ class Torus(Surface):
 
 
 class Cylinder(Surface):
+    '''圆柱
+
+    - ``height`` : 高度
+    - ``radius`` : 底面半径
+    '''
     CONFIG = {
         "height": 2,
         "radius": 1,
@@ -104,12 +123,18 @@ class Cylinder(Surface):
 
 
 class Line3D(Cylinder):
+    '''3D 直线'''
     CONFIG = {
         "width": 0.05,
         "resolution": (21, 25)
     }
 
     def __init__(self, start, end, **kwargs):
+        '''
+        - ``start`` : 起始
+        - ``end`` : 终止
+        - ``width`` : 线宽
+        '''
         digest_config(self, kwargs)
         axis = end - start
         super().__init__(
@@ -121,6 +146,9 @@ class Line3D(Cylinder):
 
 
 class Disk3D(Surface):
+    '''圆盘
+
+    - ``radius`` : 半径'''
     CONFIG = {
         "radius": 1,
         "u_range": (0, 1),
@@ -141,6 +169,9 @@ class Disk3D(Surface):
 
 
 class Square3D(Surface):
+    '''3D 正方形
+
+    - ``side_length`` : 边长'''
     CONFIG = {
         "side_length": 2,
         "u_range": (-1, 1),
@@ -157,6 +188,9 @@ class Square3D(Surface):
 
 
 class Cube(SGroup):
+    '''立方体
+
+    - ``side_length`` : 边长'''
     CONFIG = {
         "color": BLUE,
         "opacity": 1,
@@ -190,6 +224,7 @@ class Cube(SGroup):
 
 
 class VCube(VGroup):
+    '''立方体，使用 2D 正方形绘制'''
     CONFIG = {
         "fill_color": BLUE_D,
         "fill_opacity": 1,
@@ -209,6 +244,9 @@ class VCube(VGroup):
 
 
 class Prism(Cube):
+    '''
+    四棱柱（数组 dimensions 为每维上的长度）
+    '''
     CONFIG = {
         "dimensions": [3, 2, 1]
     }

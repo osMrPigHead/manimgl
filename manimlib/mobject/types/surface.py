@@ -11,6 +11,9 @@ from manimlib.utils.space_ops import normalize_along_axis
 
 
 class Surface(Mobject):
+    '''
+    曲面（基类）
+    '''
     CONFIG = {
         "u_range": (0, 1),
         "v_range": (0, 1),
@@ -38,6 +41,16 @@ class Surface(Mobject):
     }
 
     def __init__(self, **kwargs):
+        '''
+        - ``u_range`` : u 范围
+        - ``v_range`` : v 范围
+        - ``resolution`` : 分割精度
+        - ``color`` : 颜色
+        - ``opacity`` : 透明度
+        - ``gloss`` : 光泽
+        - ``shadow`` : 阴影
+        - ``opacity`` : 透明度
+        '''
         super().__init__(**kwargs)
         self.compute_triangle_indices()
 
@@ -93,6 +106,7 @@ class Surface(Mobject):
         return points[:k], points[k:2 * k], points[2 * k:]
 
     def get_unit_normals(self):
+        '''获取每个分割面的法向量'''
         s_points, du_points, dv_points = self.get_surface_points_and_nudged_points()
         normals = np.cross(
             (du_points - s_points) / self.epsilon,
@@ -101,6 +115,9 @@ class Surface(Mobject):
         return normalize_along_axis(normals, 1)
 
     def pointwise_become_partial(self, smobject, a, b, axis=None):
+        '''
+        生成一个曲面百分比从 a 到 b 的物件
+        '''
         assert(isinstance(smobject, Surface))
         if axis is None:
             axis = self.prefered_creation_axis
@@ -116,6 +133,7 @@ class Surface(Mobject):
         return self
 
     def get_partial_points_array(self, points, a, b, resolution, axis):
+        '''获取百分比从 a 到 b 的部分点集'''
         if len(points) == 0:
             return points
         nu, nv = resolution[:2]
@@ -181,7 +199,15 @@ class Surface(Mobject):
 
 
 class ParametricSurface(Surface):
+    '''
+    参数曲面
+    '''
     def __init__(self, uv_func, u_range=(0, 1), v_range=(0, 1), **kwargs):
+        '''传入 func 为自变量为参数 u,v ，返回值为一个点的函数
+           
+        - ``u_range``, ``v_range`` : 参数范围
+        - ``resolution`` : ``u, v`` 范围分为多少段（为一个数时 uv 均为此值，为元组时 u 为第一个 v 为第二个）
+        '''
         self.passed_uv_func = uv_func
         super().__init__(u_range=u_range, v_range=v_range, **kwargs)
 
@@ -190,6 +216,7 @@ class ParametricSurface(Surface):
 
 
 class SGroup(Surface):
+    '''参数曲面集合，相当于 ``Group``'''
     CONFIG = {
         "resolution": (0, 0),
     }
@@ -203,6 +230,7 @@ class SGroup(Surface):
 
 
 class TexturedSurface(Surface):
+    '''带有贴图的曲面'''
     CONFIG = {
         "shader_folder": "textured_surface",
         "shader_dtype": [
@@ -215,6 +243,11 @@ class TexturedSurface(Surface):
     }
 
     def __init__(self, uv_surface, image_file, dark_image_file=None, **kwargs):
+        '''
+        - ``uv_surface`` : 曲面
+        - ``image_file`` : 贴图
+        - ``dark_image_file`` : 可以看作是第二张贴图
+        '''
         if not isinstance(uv_surface, Surface):
             raise Exception("uv_surface must be of type Surface")
         # Set texture information

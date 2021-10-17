@@ -15,13 +15,17 @@ SAVED_TEX_CONFIG = {}
 def get_tex_config():
     """
     Returns a dict which should look something like this:
-    {
-        "executable": "latex",
-        "template_file": "tex_template.tex",
-        "intermediate_filetype": "dvi",
-        "text_to_replace": "YourTextHere",
-        "tex_body": "..."
-    }
+    
+    .. code:: python
+
+        {
+            "executable": "latex",
+            "template_file": "tex_template.tex",
+            "intermediate_filetype": "dvi",
+            "text_to_replace": "YourTextHere",
+            "tex_body": "..."
+        }
+
     """
     # Only load once, then save thereafter
     if not SAVED_TEX_CONFIG:

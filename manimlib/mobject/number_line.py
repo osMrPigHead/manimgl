@@ -6,9 +6,11 @@ from manimlib.utils.bezier import interpolate
 from manimlib.utils.config_ops import digest_config
 from manimlib.utils.config_ops import merge_dicts_recursively
 from manimlib.utils.simple_functions import fdiv
+from manimlib.utils.space_ops import normalize
 
 
 class NumberLine(Line):
+    '''数轴'''
     CONFIG = {
         "color": GREY_B,
         "stroke_width": 2,
@@ -39,6 +41,14 @@ class NumberLine(Line):
     }
 
     def __init__(self, x_range=None, **kwargs):
+        '''
+        - ``x_range=[x_min, x_max, dx]`` : 范围和步进
+        - ``include_numbers`` : 是否包含数字
+        - ``include_ticks`` : 包含刻度
+        - ``decimal_number_config`` : 数轴标数
+            - ``num_decimal_places`` : 小数点位数
+            - ``font_size`` : 字体大小
+        '''
         digest_config(self, kwargs)
         if x_range is None:
             x_range = self.x_range
@@ -101,10 +111,12 @@ class NumberLine(Line):
         return self.ticks
 
     def number_to_point(self, number):
+        '''输入一个数轴上的数，返回它的绝对坐标，number -> array[x, y, 0]'''
         alpha = float(number - self.x_min) / (self.x_max - self.x_min)
         return interpolate(self.get_start(), self.get_end(), alpha)
 
     def point_to_number(self, point):
+        '''输入一个绝对坐标，返回这个坐标在数轴上标的数，array[x, y, 0] -> number'''
         points = self.get_points()
         start = points[0]
         end = points[-1]
@@ -116,14 +128,15 @@ class NumberLine(Line):
         return interpolate(self.x_min, self.x_max, proportion)
 
     def n2p(self, number):
-        """Abbreviation for number_to_point"""
+        """number_to_point 的简写"""
         return self.number_to_point(number)
 
     def p2n(self, point):
-        """Abbreviation for point_to_number"""
+        """point_to_number 的简写"""
         return self.point_to_number(point)
 
     def get_unit_size(self):
+        '''获取单位长度'''
         return self.get_length() / (self.x_max - self.x_min)
 
     def get_number_mobject(self, x,
@@ -150,6 +163,7 @@ class NumberLine(Line):
         return num_mob
 
     def add_numbers(self, x_values=None, excluding=None, font_size=24, **kwargs):
+        '''给数轴标数'''
         if x_values is None:
             x_values = self.get_tick_range()
 
@@ -169,6 +183,7 @@ class NumberLine(Line):
 
 
 class UnitInterval(NumberLine):
+    '''范围为 [0,1] 的数轴'''
     CONFIG = {
         "x_range": [0, 1, 0.1],
         "unit_size": 10,

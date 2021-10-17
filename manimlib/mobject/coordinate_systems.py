@@ -22,7 +22,10 @@ EPSILON = 1e-8
 
 class CoordinateSystem():
     """
-    Abstract class for Axes and NumberPlane
+    Axes 和 NumberPlane 的抽象基类
+
+    - ``x_range`` 和 ``y_range`` 控制坐标轴范围和分割精度，格式为 ``x_range=[x_min, x_max, dx]``
+    - ``width`` 和 ``height`` 控制坐标轴的宽度和高度
     """
     CONFIG = {
         "dimension": 2,
@@ -39,17 +42,19 @@ class CoordinateSystem():
         self.y_range = np.array(self.default_y_range)
 
     def coords_to_point(self, *coords):
+        """输入坐标轴上的二维坐标，返回场景的绝对坐标，(x, y) -> array[x', y', 0]"""
         raise Exception("Not implemented")
 
     def point_to_coords(self, point):
+        """输入场景的绝对坐标，返回坐标轴上的二维坐标，array[x, y, 0] -> (x', y')"""
         raise Exception("Not implemented")
 
     def c2p(self, *coords):
-        """Abbreviation for coords_to_point"""
+        '''``coords_to_point`` 的简写'''
         return self.coords_to_point(*coords)
 
     def p2c(self, point):
-        """Abbreviation for point_to_coords"""
+        '''``point_to_coords`` 的简写'''
         return self.point_to_coords(point)
 
     def get_origin(self):
@@ -62,6 +67,7 @@ class CoordinateSystem():
         raise Exception("Not implemented")
 
     def get_axis(self, index):
+        """获取坐标轴 Mobject"""
         return self.get_axes()[index]
 
     def get_x_axis(self):
@@ -95,6 +101,7 @@ class CoordinateSystem():
         return label
 
     def get_axis_labels(self, x_label_tex="x", y_label_tex="y"):
+        '''获取 x 轴和 y 轴上的标志（一个 VGroup）'''
         self.axis_labels = VGroup(
             self.get_x_axis_label(x_label_tex),
             self.get_y_axis_label(y_label_tex),
@@ -111,13 +118,16 @@ class CoordinateSystem():
         return line
 
     def get_v_line(self, point, **kwargs):
+        '''传入一个点，过该点作铅垂线'''
         return self.get_line_from_axis_to_point(0, point, **kwargs)
 
     def get_h_line(self, point, **kwargs):
+        '''传入一个点，过该点作水平线'''
         return self.get_line_from_axis_to_point(1, point, **kwargs)
 
     # Useful for graphing
     def get_graph(self, function, x_range=None, **kwargs):
+        '''绘制函数图像，并且自动移动到坐标轴的相对位置，使用 ``ParametricCurve``'''
         t_range = np.array(self.x_range, dtype=float)
         if x_range is not None:
             t_range[:len(x_range)] = x_range
@@ -146,6 +156,9 @@ class CoordinateSystem():
         return graph
 
     def input_to_graph_point(self, x, graph):
+        """
+        传入一个 x，返回图像上以该 x 为横坐标的点的绝对坐标
+        """
         if hasattr(graph, "underlying_function"):
             return self.coords_to_point(x, graph.underlying_function(x))
         else:
@@ -163,9 +176,7 @@ class CoordinateSystem():
                 return None
 
     def i2gp(self, x, graph):
-        """
-        Alias for input_to_graph_point
-        """
+        '''``input_to_graph_point`` 的简写'''
         return self.input_to_graph_point(x, graph)
 
     def get_graph_label(self,
@@ -175,6 +186,7 @@ class CoordinateSystem():
                         direction=RIGHT,
                         buff=MED_SMALL_BUFF,
                         color=None):
+        '''给函数图像标上文本标签'''
         if isinstance(label, str):
             label = Tex(label)
         if color is None:
@@ -202,21 +214,26 @@ class CoordinateSystem():
         return label
 
     def get_v_line_to_graph(self, x, graph, **kwargs):
+        '''以 x 为横坐标作铅垂线并与函数图像相交'''
         return self.get_v_line(self.i2gp(x, graph), **kwargs)
 
     def get_h_line_to_graph(self, x, graph, **kwargs):
+        '''以 x 为纵坐标~~（为什么不用 y 呢）~~作水平线并与函数图像相交'''
         return self.get_h_line(self.i2gp(x, graph), **kwargs)
 
     # For calculus
     def angle_of_tangent(self, x, graph, dx=EPSILON):
+        '''获取横坐标为 x 的点处切线的倾斜角'''
         p0 = self.input_to_graph_point(x, graph)
         p1 = self.input_to_graph_point(x + dx, graph)
         return angle_of_vector(p1 - p0)
 
     def slope_of_tangent(self, x, graph, **kwargs):
+        '''获取横坐标为 x 的点处切线的斜率'''
         return np.tan(self.angle_of_tangent(x, graph, **kwargs))
 
     def get_tangent_line(self, x, graph, length=5, line_func=Line):
+        '''绘制横坐标为 x 的点处的切线，返回一个 Line Mobject'''
         line = line_func(LEFT, RIGHT)
         line.set_width(length)
         line.rotate(self.angle_of_tangent(x, graph))
@@ -233,6 +250,12 @@ class CoordinateSystem():
                                fill_opacity=1,
                                colors=(BLUE, GREEN),
                                show_signed_area=True):
+        '''
+        绘制矩形填充图像下方的区域
+
+        - ``x_range = [x_min, x_max, dx]`` 可以指定范围，其中 ``dx`` 为分割精度
+        - ``input_sample_type`` 指定矩形的左上角、上边缘中心、右上角抵在图像上
+        '''
         if x_range is None:
             x_range = self.x_range[:2]
         if dx is None:
@@ -254,7 +277,7 @@ class CoordinateSystem():
             height = get_norm(
                 self.i2gp(sample, graph) - self.c2p(sample, 0)
             )
-            rect = Rectangle(width=x1 - x0, height=height)
+            rect = Rectangle(width=(self.c2p(x1, 0) - self.c2p(x0, 0))[0], height=height)
             rect.move_to(self.c2p(x0, 0), DL)
             rects.append(rect)
         result = VGroup(*rects)
@@ -272,6 +295,15 @@ class CoordinateSystem():
 
 
 class Axes(VGroup, CoordinateSystem):
+    '''
+    xOy 二维坐标系，由两条 ``NumberLine`` 组成，因此可以在一些参数中使用 ``NumberLine`` 的参数列表
+
+    - ``x_axis_config`` 中放入 x 轴的参数，格式为一个字典
+    - ``y_axis_config`` 中放入 y 轴的参数，同上
+    - ``axis_config``
+        - ``include_tip`` 是否包含箭头
+        - ``numbers_to_exclude`` 在给坐标轴标上数字时，在这个列表中的数字会被排除
+    '''
     CONFIG = {
         "axis_config": {
             "include_tip": True,
@@ -289,6 +321,10 @@ class Axes(VGroup, CoordinateSystem):
                  x_range=None,
                  y_range=None,
                  **kwargs):
+        '''
+        - ``x_range`` 和 ``y_range`` 控制坐标轴范围和分割精度，格式为 ``x_range=[x_min, x_max, dx]``
+        - ``width`` 和 ``height`` 控制坐标轴的宽度和高度
+        '''
         CoordinateSystem.__init__(self, **kwargs)
         VGroup.__init__(self, **kwargs)
 
@@ -341,6 +377,7 @@ class Axes(VGroup, CoordinateSystem):
                               x_values=None,
                               y_values=None,
                               **kwargs):
+        '''给坐标轴标上数字'''
         axes = self.get_axes()
         self.coordinate_labels = VGroup()
         for axis, values in zip(axes, [x_values, y_values]):
@@ -350,6 +387,7 @@ class Axes(VGroup, CoordinateSystem):
 
 
 class ThreeDAxes(Axes):
+    '''继承于 ``Axes`` 的三维坐标系，包含 xyz'''
     CONFIG = {
         "dimension": 3,
         "x_range": np.array([-6.0, 6.0, 1.0]),
@@ -365,6 +403,10 @@ class ThreeDAxes(Axes):
     }
 
     def __init__(self, x_range=None, y_range=None, z_range=None, **kwargs):
+        '''
+        - ``x_range``, ``y_range``, ``z_range`` 控制坐标轴范围和分割精度，格式为 ``x_range=[x_min, x_max, dx]``
+        - ``width``, ``height``, ``depth`` 控制坐标轴的宽度、高度、深度
+        '''
         Axes.__init__(self, x_range, y_range, **kwargs)
         if z_range is not None:
             self.z_range[:len(z_range)] = z_range
@@ -392,6 +434,7 @@ class ThreeDAxes(Axes):
 
 
 class NumberPlane(Axes):
+    '''带有网格线的二维坐标系'''
     CONFIG = {
         "axis_config": {
             "stroke_color": WHITE,
@@ -478,10 +521,12 @@ class NumberPlane(Axes):
         return self.axes
 
     def get_vector(self, coords, **kwargs):
+        '''输入一个坐标轴的相对坐标，绘制一个【从原点到该点的向量】'''
         kwargs["buff"] = 0
         return Arrow(self.c2p(0, 0), self.c2p(*coords), **kwargs)
 
     def prepare_for_nonlinear_transform(self, num_inserted_curves=50):
+        '''将坐标系的每一条线进行分割，以适配即将应用的非线性变换'''
         for mob in self.family_members_with_points():
             num_curves = mob.get_num_curves()
             if num_inserted_curves > num_curves:
@@ -491,23 +536,30 @@ class NumberPlane(Axes):
 
 
 class ComplexPlane(NumberPlane):
+    '''
+    复平面坐标系
+    '''
     CONFIG = {
         "color": BLUE,
         "line_frequency": 1,
     }
 
     def number_to_point(self, number):
+        '''输入一个复数，返回该数对应的点的绝对坐标'''
         number = complex(number)
         return self.coords_to_point(number.real, number.imag)
 
     def n2p(self, number):
+        '''number_to_point 的简写'''
         return self.number_to_point(number)
 
     def point_to_number(self, point):
+        '''输入一个绝对坐标，返回复平面上该点对应的复数'''
         x, y = self.point_to_coords(point)
         return complex(x, y)
 
     def p2n(self, point):
+        '''point_to_number 的简写'''
         return self.point_to_number(point)
 
     def get_default_coordinate_values(self, skip_first=True):

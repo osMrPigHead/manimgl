@@ -35,9 +35,7 @@ from manimlib.event_handler.event_type import EventType
 
 
 class Mobject(object):
-    """
-    Mathematical Object
-    """
+    """数学物品（屏幕上的所有物体的超类）"""
     CONFIG = {
         "color": WHITE,
         "opacity": 1,
@@ -127,6 +125,7 @@ class Mobject(object):
         return self
 
     def set_points(self, points):
+        '''设置锚点'''
         if len(points) == len(self.data["points"]):
             self.data["points"][:] = points
         elif isinstance(points, np.ndarray):
@@ -137,17 +136,20 @@ class Mobject(object):
         return self
 
     def append_points(self, new_points):
+        '''添加锚点'''
         self.data["points"] = np.vstack([self.data["points"], new_points])
         self.refresh_bounding_box()
         return self
 
     def reverse_points(self):
+        '''反转锚点'''
         for mob in self.get_family():
             for key in mob.data:
                 mob.data[key] = mob.data[key][::-1]
         return self
 
     def apply_points_function(self, func, about_point=None, about_edge=ORIGIN, works_on_bounding_box=False):
+        """以 ``about_point`` 为不变基准点，或以 ``about_edge`` 为不变基准边，对所有点执行 ``func``"""
         if about_point is None and about_edge is not None:
             about_point = self.get_bounding_box_point(about_edge)
 
@@ -174,34 +176,45 @@ class Mobject(object):
     # Others related to points
 
     def match_points(self, mobject):
+        '''将自身锚点与 ``mobject`` 的锚点匹配'''
         self.set_points(mobject.get_points())
         return self
 
     def get_points(self):
+        '''获取物件锚点'''
         return self.data["points"]
 
     def clear_points(self):
+        '''清空物件锚点'''
         self.resize_points(0)
 
     def get_num_points(self):
+        '''获取锚点数量'''
         return len(self.data["points"])
 
     def get_all_points(self):
+        '''获取物件所有锚点'''
         if self.submobjects:
             return np.vstack([sm.get_points() for sm in self.get_family()])
         else:
             return self.get_points()
 
     def has_points(self):
+        '''判断是否有锚点'''
         return self.get_num_points() > 0
 
     def get_bounding_box(self):
+        '''获取物件的矩形包围框（碰撞箱）
+        
+        包含三个元素，分别为左上，中心，右下
+        '''
         if self.needs_new_bounding_box:
             self.data["bounding_box"] = self.compute_bounding_box()
             self.needs_new_bounding_box = False
         return self.data["bounding_box"]
 
     def compute_bounding_box(self):
+        '''计算包围框'''
         all_points = np.vstack([
             self.get_points(),
             *(
@@ -220,6 +233,7 @@ class Mobject(object):
             return np.array([mins, mids, maxs])
 
     def refresh_bounding_box(self, recurse_down=False, recurse_up=True):
+        '''更新包围框'''
         for mob in self.get_family(recurse_down):
             mob.needs_new_bounding_box = True
         if recurse_up:
@@ -228,6 +242,7 @@ class Mobject(object):
         return self
 
     def is_point_touching(self, point, buff=MED_SMALL_BUFF):
+        '''判断某一点是否在本物件的包围框范围内'''
         bb = self.get_bounding_box()
         mins = (bb[0] - buff)
         maxs = (bb[2] + buff)
@@ -269,6 +284,7 @@ class Mobject(object):
         return [m for m in self.get_family() if m.has_points()]
 
     def add(self, *mobjects):
+        '''将 ``mobjects`` 添加到子物体中'''
         if self in mobjects:
             raise Exception("Mobject cannot contain self")
         for mobject in mobjects:
@@ -280,6 +296,7 @@ class Mobject(object):
         return self
 
     def remove(self, *mobjects):
+        '''将 ``mobjects`` 从子物体中移除'''
         for mobject in mobjects:
             if mobject in self.submobjects:
                 self.submobjects.remove(mobject)
@@ -289,10 +306,12 @@ class Mobject(object):
         return self
 
     def add_to_back(self, *mobjects):
+        '''将 ``mobjects`` 添加到子物体前面（覆盖关系在下）'''
         self.set_submobjects(list_update(mobjects, self.submobjects))
         return self
 
     def replace_submobject(self, index, new_submob):
+        '''用新的子物件代替指定索引处的旧子物件'''
         old_submob = self.submobjects[index]
         if self in old_submob.parents:
             old_submob.parents.remove(self)
@@ -301,14 +320,14 @@ class Mobject(object):
         return self
 
     def set_submobjects(self, submobject_list):
+        '''重新设置子物件'''
         self.remove(*self.submobjects)
         self.add(*submobject_list)
         return self
 
     def digest_mobject_attrs(self):
         """
-        Ensures all attributes which are mobjects are included
-        in the submobjects list.
+        确保所有对象属性都包含在子对象列表中
         """
         mobject_attrs = [x for x in list(self.__dict__.values()) if isinstance(x, Mobject)]
         self.set_submobjects(list_update(self.submobjects, mobject_attrs))
@@ -317,6 +336,7 @@ class Mobject(object):
     # Submobject organization
 
     def arrange(self, direction=RIGHT, center=True, **kwargs):
+        '''将子物件按照 ``direction`` 方向排列'''
         for m1, m2 in zip(self.submobjects, self.submobjects[1:]):
             m2.next_to(m1, direction, **kwargs)
         if center:
@@ -332,6 +352,12 @@ class Mobject(object):
                         v_buff_ratio=0.5,
                         aligned_edge=ORIGIN,
                         fill_rows_first=True):
+        '''将子物件按表格方式排列
+
+        - ``n_rows``, ``n_cols`` : 行数、列数
+        - ``v_buff``,``h_buff`` : 行距、列距
+        - ``aligned_edge`` : 对齐边缘
+        '''
         submobs = self.submobjects
         if n_rows is None and n_cols is None:
             n_rows = int(np.sqrt(len(submobs)))
@@ -372,8 +398,7 @@ class Mobject(object):
 
     def get_grid(self, n_rows, n_cols, height=None, **kwargs):
         """
-        Returns a new mobject containing multiple copies of this one
-        arranged in a grid
+        拷贝一份，并将这份拷贝按表格方式排好后返回
         """
         grid = self.replicate(n_rows * n_cols)
         grid.arrange_in_grid(n_rows, n_cols, **kwargs)
@@ -382,6 +407,7 @@ class Mobject(object):
         return grid
 
     def sort(self, point_to_num_func=lambda p: p[0], submob_func=None):
+        '''对子物件进行排序'''
         if submob_func is not None:
             self.submobjects.sort(key=submob_func)
         else:
@@ -389,6 +415,7 @@ class Mobject(object):
         return self
 
     def shuffle(self, recurse=False):
+        '''随机打乱子物件的顺序'''
         if recurse:
             for submob in self.submobjects:
                 submob.shuffle(recurse=True)
@@ -398,6 +425,7 @@ class Mobject(object):
     # Copying
 
     def copy(self):
+        '''获取物件的拷贝'''
         # TODO, either justify reason for shallow copy, or
         # remove this redundancy everywhere
         # return self.deepcopy()
@@ -411,10 +439,8 @@ class Mobject(object):
         for key in self.data:
             copy_mobject.data[key] = self.data[key].copy()
 
+        # TODO, are uniforms ever numpy arrays?
         copy_mobject.uniforms = dict(self.uniforms)
-        for key in self.uniforms:
-            if isinstance(self.uniforms[key], np.ndarray):
-                copy_mobject.uniforms[key] = self.uniforms[key].copy()
 
         copy_mobject.submobjects = []
         copy_mobject.add(*[sm.copy() for sm in self.submobjects])
@@ -441,6 +467,7 @@ class Mobject(object):
         return result
 
     def generate_target(self, use_deepcopy=False):
+        '''通过复制自身作为自己的 target, 生成一个 target 属性'''
         self.target = None  # Prevent exponential explosion
         if use_deepcopy:
             self.target = self.deepcopy()
@@ -449,6 +476,7 @@ class Mobject(object):
         return self.target
 
     def save_state(self, use_deepcopy=False):
+        '''保留状态，即复制一份作为 ``saved_state`` 属性'''
         if hasattr(self, "saved_state"):
             # Prevent exponential growth of data
             self.saved_state = None
@@ -459,6 +487,7 @@ class Mobject(object):
         return self
 
     def restore(self):
+        '''恢复为 ``saved_state`` 的状态'''
         if not hasattr(self, "saved_state") or self.save_state is None:
             raise Exception("Trying to restore without having saved")
         self.become(self.saved_state)
@@ -497,6 +526,7 @@ class Mobject(object):
         return list(it.chain(*[sm.get_updaters() for sm in self.get_family()]))
 
     def add_updater(self, update_function, index=None, call_updater=True):
+        '''添加 ``updater`` 函数'''
         if "dt" in get_parameters(update_function):
             updater_list = self.time_based_updaters
         else:
@@ -513,6 +543,7 @@ class Mobject(object):
         return self
 
     def remove_updater(self, update_function):
+        '''移除指定的 ``updater`` 函数'''
         for updater_list in [self.time_based_updaters, self.non_time_updaters]:
             while update_function in updater_list:
                 updater_list.remove(update_function)
@@ -520,6 +551,7 @@ class Mobject(object):
         return self
 
     def clear_updaters(self, recurse=True):
+        '''清空所有的 ``updater`` 函数'''
         self.time_based_updaters = []
         self.non_time_updaters = []
         self.refresh_has_updater_status()
@@ -529,12 +561,14 @@ class Mobject(object):
         return self
 
     def match_updaters(self, mobject):
+        '''将自己的 ``updater`` 函数与 ``mobject`` 匹配'''
         self.clear_updaters()
         for updater in mobject.get_updaters():
             self.add_updater(updater)
         return self
 
     def suspend_updating(self, recurse=True):
+        '''停止物件更新'''
         self.updating_suspended = True
         if recurse:
             for submob in self.submobjects:
@@ -542,6 +576,7 @@ class Mobject(object):
         return self
 
     def resume_updating(self, recurse=True, call_updater=True):
+        '''恢复物件更新'''
         self.updating_suspended = False
         if recurse:
             for submob in self.submobjects:
@@ -559,6 +594,7 @@ class Mobject(object):
     # Transforming operations
 
     def shift(self, vector):
+        '''相对移动 vector 向量'''
         self.apply_points_function(
             lambda points: points + vector,
             about_edge=None,
@@ -568,13 +604,7 @@ class Mobject(object):
 
     def scale(self, scale_factor, min_scale_factor=1e-8, about_point=None, about_edge=ORIGIN):
         """
-        Default behavior is to scale about the center of the mobject.
-        The argument about_edge can be a vector, indicating which side of
-        the mobject to scale about, e.g., mob.scale(about_edge = RIGHT)
-        scales about mob.get_right().
-
-        Otherwise, if about_point is given a value, scaling is done with
-        respect to that point.
+        放大 (缩小) 到原来的 ``scale_factor`` 倍，``kwargs`` 中可以传入 ``about_point/about_edge``
         """
         scale_factor = max(scale_factor, min_scale_factor)
         self.apply_points_function(
@@ -593,6 +623,7 @@ class Mobject(object):
         pass
 
     def stretch(self, factor, dim, **kwargs):
+        '''把 ``dim`` 维度伸缩到原来的 ``factor`` 倍'''
         def func(points):
             points[:, dim] *= factor
             return points
@@ -600,9 +631,11 @@ class Mobject(object):
         return self
 
     def rotate_about_origin(self, angle, axis=OUT):
+        '''绕原点旋转 ``angle`` 弧度'''
         return self.rotate(angle, axis, about_point=ORIGIN)
 
     def rotate(self, angle, axis=OUT, **kwargs):
+        '''以 ``axis`` 为方向，``angle`` 为角度旋转，``kwargs`` 中可传入 ``about_point``'''
         rot_matrix_T = rotation_matrix_transpose(angle, axis)
         self.apply_points_function(
             lambda points: np.dot(points, rot_matrix_T),
@@ -611,9 +644,11 @@ class Mobject(object):
         return self
 
     def flip(self, axis=UP, **kwargs):
+        '''绕 ``axis`` 轴翻转'''
         return self.rotate(TAU / 2, axis, **kwargs)
 
     def apply_function(self, function, **kwargs):
+        '''把 ``function`` 作用到所有锚点上'''
         # Default to applying matrix about the origin, not mobjects center
         if len(kwargs) == 0:
             kwargs["about_point"] = ORIGIN
@@ -624,15 +659,18 @@ class Mobject(object):
         return self
 
     def apply_function_to_position(self, function):
+        '''给物体所在的位置执行 ``function``'''
         self.move_to(function(self.get_center()))
         return self
 
     def apply_function_to_submobject_positions(self, function):
+        '''给所有子物体所在的位置执行 ``function``'''
         for submob in self.submobjects:
             submob.apply_function_to_position(function)
         return self
 
     def apply_matrix(self, matrix, **kwargs):
+        '''把 ``matrix`` 矩阵作用到所有点上'''
         # Default to applying matrix about the origin, not mobjects center
         if ("about_point" not in kwargs) and ("about_edge" not in kwargs):
             kwargs["about_point"] = ORIGIN
@@ -646,6 +684,7 @@ class Mobject(object):
         return self
 
     def apply_complex_function(self, function, **kwargs):
+        '''施加一个复变函数'''
         def R3_func(point):
             x, y, z = point
             xy_complex = function(complex(x, y))
@@ -657,6 +696,7 @@ class Mobject(object):
         return self.apply_function(R3_func)
 
     def wag(self, direction=RIGHT, axis=DOWN, wag_factor=1.0):
+        '''沿 ``axis`` 轴 ``direction`` 方向摇摆 ``wag_factor``'''
         for mob in self.family_members_with_points():
             alphas = np.dot(mob.get_points(), np.transpose(axis))
             alphas -= min(alphas)
@@ -671,13 +711,13 @@ class Mobject(object):
     # Positioning methods
 
     def center(self):
+        '''放到画面中心'''
         self.shift(-self.get_center())
         return self
 
     def align_on_border(self, direction, buff=DEFAULT_MOBJECT_TO_EDGE_BUFFER):
         """
-        Direction just needs to be a vector pointing towards side or
-        corner in the 2d plane.
+        以 ``direction`` 这个边界对齐
         """
         target_point = np.sign(direction) * (FRAME_X_RADIUS, FRAME_Y_RADIUS, 0)
         point_to_align = self.get_bounding_box_point(direction)
@@ -687,9 +727,11 @@ class Mobject(object):
         return self
 
     def to_corner(self, corner=LEFT + DOWN, buff=DEFAULT_MOBJECT_TO_EDGE_BUFFER):
+        '''和 ``corner`` 这个角落对齐'''
         return self.align_on_border(corner, buff)
 
     def to_edge(self, edge=LEFT, buff=DEFAULT_MOBJECT_TO_EDGE_BUFFER):
+        '''和 ``edge`` 这个边对齐'''
         return self.align_on_border(edge, buff)
 
     def next_to(self, mobject_or_point,
@@ -700,6 +742,7 @@ class Mobject(object):
                 index_of_submobject_to_align=None,
                 coor_mask=np.array([1, 1, 1]),
                 ):
+        '''放到 ``mobject_or_point`` 旁边'''
         if isinstance(mobject_or_point, Mobject):
             mob = mobject_or_point
             if index_of_submobject_to_align is not None:
@@ -722,6 +765,7 @@ class Mobject(object):
         return self
 
     def shift_onto_screen(self, **kwargs):
+        '''确保在画面中'''
         space_lengths = [FRAME_X_RADIUS, FRAME_Y_RADIUS]
         for vect in UP, DOWN, LEFT, RIGHT:
             dim = np.argmax(np.abs(vect))
@@ -733,6 +777,7 @@ class Mobject(object):
         return self
 
     def is_off_screen(self):
+        '''判断是否在画面外'''
         if self.get_left()[0] > FRAME_X_RADIUS:
             return True
         if self.get_right()[0] < -FRAME_X_RADIUS:
@@ -794,6 +839,7 @@ class Mobject(object):
         return self
 
     def set_coord(self, value, dim, direction=ORIGIN):
+        '''移动到 ``dim`` 维度的 ``value`` 位置'''
         curr = self.get_coord(dim, direction)
         shift_vect = np.zeros(self.dim)
         shift_vect[dim] = value - curr
@@ -801,15 +847,19 @@ class Mobject(object):
         return self
 
     def set_x(self, x, direction=ORIGIN):
+        '''将 x 轴坐标设置为 x'''
         return self.set_coord(x, 0, direction)
 
     def set_y(self, y, direction=ORIGIN):
+        '''将 y 轴坐标设置为 y'''
         return self.set_coord(y, 1, direction)
 
     def set_z(self, z, direction=ORIGIN):
+        '''将 z 轴坐标设置为 z'''
         return self.set_coord(z, 2, direction)
 
     def space_out_submobjects(self, factor=1.5, **kwargs):
+        '''调整子物件的间距为 ``factor`` 倍'''
         self.scale(factor, **kwargs)
         for submob in self.submobjects:
             submob.scale(1. / factor)
@@ -817,6 +867,7 @@ class Mobject(object):
 
     def move_to(self, point_or_mobject, aligned_edge=ORIGIN,
                 coor_mask=np.array([1, 1, 1])):
+        '''移动到 ``point_or_mobject`` 的位置'''
         if isinstance(point_or_mobject, Mobject):
             target = point_or_mobject.get_bounding_box_point(aligned_edge)
         else:
@@ -826,6 +877,7 @@ class Mobject(object):
         return self
 
     def replace(self, mobject, dim_to_match=0, stretch=False):
+        '''放到和 ``mobject`` 的位置，并且大小相同'''
         if not mobject.get_num_points() and not mobject.submobjects:
             self.scale(0)
             return self
@@ -845,12 +897,14 @@ class Mobject(object):
                  dim_to_match=0,
                  stretch=False,
                  buff=MED_SMALL_BUFF):
+        '''环绕着 mobject'''
         self.replace(mobject, dim_to_match, stretch)
         length = mobject.length_over_dim(dim_to_match)
         self.scale((length + buff) / length)
         return self
 
     def put_start_and_end_on(self, start, end):
+        '''把物体点集中的起点和终点通过旋转缩放放在 ``start`` 和 ``end``'''
         curr_start, curr_end = self.get_start_and_end()
         curr_vect = curr_end - curr_start
         if np.all(curr_vect == 0):
@@ -873,13 +927,14 @@ class Mobject(object):
     # Color functions
 
     def set_rgba_array(self, rgba_array, name="rgbas", recurse=False):
+        '''将 rgbas 成员变量设置为指定的值'''
         for mob in self.get_family(recurse):
             mob.data[name] = np.array(rgba_array)
         return self
 
     def set_color_by_rgba_func(self, func, recurse=True):
         """
-        Func should take in a point in R3 and output an rgba value
+        传入一个函数，这个函数接受一个三维坐标，将物件按照这个函数的方法设置颜色，包含透明度
         """
         for mob in self.get_family(recurse):
             rgba_array = [func(point) for point in mob.get_points()]
@@ -888,7 +943,7 @@ class Mobject(object):
 
     def set_color_by_rgb_func(self, func, opacity=1, recurse=True):
         """
-        Func should take in a point in R3 and output an rgb value
+        传入一个函数，这个函数接受一个三维坐标，将物件按照这个函数的方法设置颜色
         """
         for mob in self.get_family(recurse):
             rgba_array = [[*func(point), opacity] for point in mob.get_points()]
@@ -896,6 +951,7 @@ class Mobject(object):
         return self
 
     def set_rgba_array_by_color(self, color=None, opacity=None, name="rgbas", recurse=True):
+        '''通过颜色设置 rgba_array 成员以染色'''
         if color is not None:
             rgbs = np.array([color_to_rgb(c) for c in listify(color)])
         if opacity is not None:
@@ -924,6 +980,7 @@ class Mobject(object):
         return self
 
     def set_color(self, color, opacity=None, recurse=True):
+        '''设置颜色'''
         self.set_rgba_array_by_color(color, opacity, recurse=False)
         # Recurse to submobjects differently from how set_rgba_array_by_color
         # in case they implement set_color differently
@@ -933,6 +990,7 @@ class Mobject(object):
         return self
 
     def set_opacity(self, opacity, recurse=True):
+        '''设置透明度'''
         self.set_rgba_array_by_color(color=None, opacity=opacity, recurse=False)
         if recurse:
             for submob in self.submobjects:
@@ -940,12 +998,15 @@ class Mobject(object):
         return self
 
     def get_color(self):
+        '''获取颜色'''
         return rgb_to_hex(self.data["rgbas"][0, :3])
 
     def get_opacity(self):
+        '''获取透明度'''
         return self.data["rgbas"][0, 3]
 
     def set_color_by_gradient(self, *colors):
+        '''渐变染色'''
         self.set_submobject_colors_by_gradient(*colors)
         return self
 
@@ -964,20 +1025,25 @@ class Mobject(object):
         return self
 
     def fade(self, darkness=0.5, recurse=True):
+        '''变暗'''
         self.set_opacity(1.0 - darkness, recurse=recurse)
 
     def get_gloss(self):
+        '''获取光泽'''
         return self.uniforms["gloss"]
 
     def set_gloss(self, gloss, recurse=True):
+        '''设置光泽'''
         for mob in self.get_family(recurse):
             mob.uniforms["gloss"] = gloss
         return self
 
     def get_shadow(self):
+        '''阴影光泽'''
         return self.uniforms["shadow"]
 
     def set_shadow(self, shadow, recurse=True):
+        '''设置阴影'''
         for mob in self.get_family(recurse):
             mob.uniforms["shadow"] = shadow
         return self
@@ -985,6 +1051,9 @@ class Mobject(object):
     # Background rectangle
 
     def add_background_rectangle(self, color=None, opacity=0.75, **kwargs):
+        '''
+        添加背景矩形
+        '''
         # TODO, this does not behave well when the mobject has points,
         # since it gets displayed on top
         from manimlib.mobject.shape_matchers import BackgroundRectangle
@@ -997,6 +1066,7 @@ class Mobject(object):
         return self
 
     def add_background_rectangle_to_submobjects(self, **kwargs):
+        '''给子物件添加背景矩形'''
         for submobject in self.submobjects:
             submobject.add_background_rectangle(**kwargs)
         return self
@@ -1017,15 +1087,19 @@ class Mobject(object):
         ])
 
     def get_edge_center(self, direction):
+        '''获取某一边缘的中心'''
         return self.get_bounding_box_point(direction)
 
     def get_corner(self, direction):
+        '''获取某一个角落'''
         return self.get_bounding_box_point(direction)
 
     def get_center(self):
+        '''获取物件中心坐标'''
         return self.get_bounding_box()[1]
 
     def get_center_of_mass(self):
+        '''获取重心'''
         return self.get_all_points().mean(0)
 
     def get_boundary_point(self, direction):
@@ -1046,74 +1120,92 @@ class Mobject(object):
         )))
 
     def get_top(self):
+        '''获取上边缘中心'''
         return self.get_edge_center(UP)
 
     def get_bottom(self):
+        '''获取下边缘中心'''
         return self.get_edge_center(DOWN)
 
     def get_right(self):
+        '''获取右边缘中心'''
         return self.get_edge_center(RIGHT)
 
     def get_left(self):
+        '''获取左边缘中心'''
         return self.get_edge_center(LEFT)
 
     def get_zenith(self):
+        '''获取外边缘中心（这里的外，指垂直于屏幕向外的平面）'''
         return self.get_edge_center(OUT)
 
     def get_nadir(self):
+        '''获取内边缘中心（这里的内，指垂直于屏幕向内的平面）'''
         return self.get_edge_center(IN)
 
     def length_over_dim(self, dim):
+        '''在 ``dim`` 维度的长度'''
         bb = self.get_bounding_box()
         return abs((bb[2] - bb[0])[dim])
 
     def get_width(self):
+        '''获取物件宽度'''
         return self.length_over_dim(0)
 
     def get_height(self):
+        '''获取物件高度'''
         return self.length_over_dim(1)
 
     def get_depth(self):
+        '''获取物件深度（即 z 轴方向的宽度）'''
         return self.length_over_dim(2)
 
     def get_coord(self, dim, direction=ORIGIN):
         """
-        Meant to generalize get_x, get_y, get_z
+        获取物件在 ``dim`` 维度上的坐标
         """
         return self.get_bounding_box_point(direction)[dim]
 
     def get_x(self, direction=ORIGIN):
+        '''获取 x 坐标'''
         return self.get_coord(0, direction)
 
     def get_y(self, direction=ORIGIN):
+        '''获取 y 坐标'''
         return self.get_coord(1, direction)
 
     def get_z(self, direction=ORIGIN):
+        '''获取 z 坐标'''
         return self.get_coord(2, direction)
 
     def get_start(self):
+        '''获取起始点'''
         self.throw_error_if_no_points()
         return self.get_points()[0].copy()
 
     def get_end(self):
+        '''获取终止点'''
         self.throw_error_if_no_points()
         return self.get_points()[-1].copy()
 
     def get_start_and_end(self):
+        '''获取起始点和终止点'''
         self.throw_error_if_no_points()
         points = self.get_points()
         return (points[0].copy(), points[-1].copy())
 
     def point_from_proportion(self, alpha):
+        '''在整条路径上占比为 ``alpha`` 处的点'''
         points = self.get_points()
         i, subalpha = integer_interpolate(0, len(points) - 1, alpha)
         return interpolate(points[i], points[i + 1], subalpha)
 
     def pfp(self, alpha):
-        """Abbreviation fo point_from_proportion"""
+        """point_from_proportion 的简写"""
         return self.point_from_proportion(alpha)
 
     def get_pieces(self, n_pieces):
+        '''将物体拆成 ``n_pieces`` 个部分，便于部分解决 3D 中透视问题'''
         template = self.copy()
         template.set_submobjects([])
         alphas = np.linspace(0, 1, n_pieces + 1)
@@ -1132,6 +1224,7 @@ class Mobject(object):
     # Match other mobject properties
 
     def match_color(self, mobject):
+        '''将自己的颜色与 ``mobject`` 匹配'''
         return self.set_color(mobject.get_color())
 
     def match_dim_size(self, mobject, dim, **kwargs):
@@ -1141,12 +1234,15 @@ class Mobject(object):
         )
 
     def match_width(self, mobject, **kwargs):
+        '''将自己的宽度与 ``mobject`` 匹配'''
         return self.match_dim_size(mobject, 0, **kwargs)
 
     def match_height(self, mobject, **kwargs):
+        '''将自己的高度与 ``mobject`` 匹配'''
         return self.match_dim_size(mobject, 1, **kwargs)
 
     def match_depth(self, mobject, **kwargs):
+        '''将自己的深度与 ``mobject`` 匹配（这里的深度指 z 轴方向的宽度）'''
         return self.match_dim_size(mobject, 2, **kwargs)
 
     def match_coord(self, mobject, dim, direction=ORIGIN):
@@ -1157,23 +1253,23 @@ class Mobject(object):
         )
 
     def match_x(self, mobject, direction=ORIGIN):
+        '''移动到 ``mobject`` 的 x 轴坐标'''
         return self.match_coord(mobject, 0, direction)
 
     def match_y(self, mobject, direction=ORIGIN):
+        '''移动到 ``mobject`` 的 y 轴坐标'''
         return self.match_coord(mobject, 1, direction)
 
     def match_z(self, mobject, direction=ORIGIN):
+        '''移动到 ``mobject`` 的 z 轴坐标'''
         return self.match_coord(mobject, 2, direction)
 
     def align_to(self, mobject_or_point, direction=ORIGIN):
         """
-        Examples:
-        mob1.align_to(mob2, UP) moves mob1 vertically so that its
-        top edge lines ups with mob2's top edge.
-
-        mob1.align_to(mob2, alignment_vect = RIGHT) moves mob1
-        horizontally so that it's center is directly above/below
-        the center of mob2
+        对齐
+        
+        例子：
+        ``mob1.align_to(mob2, UP)`` 会将 ``mob1`` 垂直移动，顶部与 ``mob2`` 的上边缘对齐
         """
         if isinstance(mobject_or_point, Mobject):
             point = mobject_or_point.get_bounding_box_point(direction)
@@ -1301,17 +1397,13 @@ class Mobject(object):
 
     def pointwise_become_partial(self, mobject, a, b):
         """
-        Set points in such a way as to become only
-        part of mobject.
-        Inputs 0 <= a < b <= 1 determine what portion
-        of mobject to become.
+        生成一个路径百分比从 a 到 b 的物件
         """
         pass  # To implement in subclass
 
     def become(self, mobject):
         """
-        Edit all data and submobjects to be idential
-        to another mobject
+        重构物件数据并将它变成传入的 ``mobject``
         """
         self.align_family(mobject)
         for sm1, sm2 in zip(self.get_family(), mobject.get_family()):
@@ -1324,11 +1416,8 @@ class Mobject(object):
 
     def lock_data(self, keys):
         """
-        To speed up some animations, particularly transformations,
-        it can be handy to acknowledge which pieces of data
-        won't change during the animation so that calls to
-        interpolate can skip this, and so that it's not
-        read into the shader_wrapper objects needlessly
+        为了加速一些动画，尤其是 Transform，它可以很方便地确认哪些数据片段不会在动画期间改变，
+        以便调用插值可以跳过这一点，这样它就不会被不必要地读入 shader_wrapper 对象
         """
         if self.has_updaters:
             return
@@ -1362,11 +1451,13 @@ class Mobject(object):
 
     @affects_shader_info_id
     def fix_in_frame(self):
+        '''将物件锁定在屏幕上，常用于 3D 场景需要旋转镜头的情况'''
         self.uniforms["is_fixed_in_frame"] = 1.0
         return self
 
     @affects_shader_info_id
     def unfix_from_frame(self):
+        '''将锁定在屏幕上的物件解锁'''
         self.uniforms["is_fixed_in_frame"] = 0.0
         return self
 
@@ -1392,10 +1483,18 @@ class Mobject(object):
 
     def set_color_by_code(self, glsl_code):
         """
-        Takes a snippet of code and inserts it into a
-        context which has the following variables:
-        vec4 color, vec3 point, vec3 unit_normal.
-        The code should change the color variable
+        传入一段 ``glsl`` 代码，用这段代码来给物件上色
+
+        代码中包含以下变量：
+
+        - ``vec4 color``
+        - ``vec3 point``
+        - ``vec3 unit_normal``
+        - ``vec3 light_coords``
+        - ``float gloss``
+        - ``float shadow``
+
+        如果想要学习如何用 glsl 上色，推荐去 `<https://thebookofshaders/>`_ 和 `<https://shadertoy.com/>`_ 学习一番`
         """
         self.replace_shader_code(
             "///// INSERT COLOR FUNCTION HERE /////",
@@ -1407,8 +1506,10 @@ class Mobject(object):
                               min_value=-5.0, max_value=5.0,
                               colormap="viridis"):
         """
-        Pass in a glsl expression in terms of x, y and z which returns
-        a float.
+        传入一个关于 ``x, y, z`` 的字符串表达式，这个表达式应当返回一个 float 值
+
+        这个方法不是非常智能，因为会把所有匹配到的 ``x, y, z`` 都认为是变量，
+        所以如果有特殊必要的话请查看该方法的源码，进行一些更改，取消字符串的匹配和替换
         """
         # TODO, add a version of this which changes the point data instead
         # of the shader code
@@ -1444,6 +1545,7 @@ class Mobject(object):
         return self
 
     def get_shader_wrapper(self):
+        '''获取 shader 包装'''
         self.shader_wrapper.vert_data = self.get_shader_data()
         self.shader_wrapper.vert_indices = self.get_shader_vert_indices()
         self.shader_wrapper.uniforms = self.get_shader_uniforms()
@@ -1451,6 +1553,7 @@ class Mobject(object):
         return self.shader_wrapper
 
     def get_shader_wrapper_list(self):
+        '''获取 shader 包装列表'''
         shader_wrappers = it.chain(
             [self.get_shader_wrapper()],
             *[sm.get_shader_wrapper_list() for sm in self.submobjects]
@@ -1492,6 +1595,7 @@ class Mobject(object):
         shader_data[shader_data_key] = self.data[data_key]
 
     def get_shader_data(self):
+        '''获取 shader 数据'''
         shader_data = self.get_resized_shader_data_array(self.get_num_points())
         self.read_data_to_shader(shader_data, "point", "points")
         return shader_data
@@ -1520,12 +1624,14 @@ class Mobject(object):
         self.event_listners = []
 
     def add_event_listner(self, event_type, event_callback):
+        '''添加事件侦听'''
         event_listner = EventListner(self, event_type, event_callback)
         self.event_listners.append(event_listner)
         EVENT_DISPATCHER.add_listner(event_listner)
         return self
 
     def remove_event_listner(self, event_type, event_callback):
+        '''移除事件侦听'''
         event_listner = EventListner(self, event_type, event_callback)
         while event_listner in self.event_listners:
             self.event_listners.remove(event_listner)
@@ -1533,6 +1639,7 @@ class Mobject(object):
         return self
 
     def clear_event_listners(self, recurse=True):
+        '''清空事件侦听'''
         self.event_listners = []
         if recurse:
             for submob in self.submobjects:
@@ -1540,6 +1647,7 @@ class Mobject(object):
         return self
 
     def get_event_listners(self):
+        '''获取事件侦听'''
         return self.event_listners
 
     def get_family_event_listners(self):
@@ -1604,7 +1712,9 @@ class Mobject(object):
 
 
 class Group(Mobject):
+    '''数学物件组合'''
     def __init__(self, *mobjects, **kwargs):
+        '''传入一系列 ``mobjects`` 作为子物件，可以用 ``[]`` 索引'''
         if not all([isinstance(m, Mobject) for m in mobjects]):
             raise Exception("All submobjects must be of type Mobject")
         Mobject.__init__(self, **kwargs)
@@ -1612,12 +1722,14 @@ class Group(Mobject):
 
 
 class Point(Mobject):
+    '''点'''
     CONFIG = {
         "artificial_width": 1e-6,
         "artificial_height": 1e-6,
     }
 
     def __init__(self, location=ORIGIN, **kwargs):
+        '''似乎仅用于表示坐标'''
         Mobject.__init__(self, **kwargs)
         self.set_location(location)
 
@@ -1628,17 +1740,27 @@ class Point(Mobject):
         return self.artificial_height
 
     def get_location(self):
+        '''获取坐标位置'''
         return self.get_points()[0].copy()
 
     def get_bounding_box_point(self, *args, **kwargs):
         return self.get_location()
 
     def set_location(self, new_loc):
+        '''设置坐标位置'''
         self.set_points(np.array(new_loc, ndmin=2, dtype=float))
 
 
 class _AnimationBuilder:
+    '''动画编译器'''
     def __init__(self, mobject):
+        '''用于场景类 ``Scene`` 的 ``play`` 中，用法如下：
+
+        ``self.play(mob.animate.shift(UP).scale(2).rotate(PI))``
+
+        该示例中，会使 mob 生成一个 **向上移动 2 个单位，放大至 2 倍，旋转 180 度** 的目标，并使用类似 
+        ``MoveToTarget`` 的方法将它变为目标的样式
+        '''
         self.mobject = mobject
         self.overridden_animation = None
         self.mobject.generate_target()

@@ -42,11 +42,15 @@ Z_COLOR = BLUE_D
 # Also, methods I would have thought of as getters, like coords_to_vector, are
 # actually doing a lot of animating.
 class VectorScene(Scene):
+    '''向量场场景
+
+    但似乎与新版有些脱节了，在未来的版本可能会大改'''
     CONFIG = {
         "basis_vector_stroke_width": 6
     }
 
     def add_plane(self, animate=False, **kwargs):
+        '''添加 NumberPlane'''
         plane = NumberPlane(**kwargs)
         if animate:
             self.play(ShowCreation(plane, lag_ratio=0.5))
@@ -54,6 +58,7 @@ class VectorScene(Scene):
         return plane
 
     def add_axes(self, animate=False, color=WHITE, **kwargs):
+        '''添加 Axes'''
         axes = Axes(color=color, tick_frequency=1)
         if animate:
             self.play(ShowCreation(axes))
@@ -61,6 +66,7 @@ class VectorScene(Scene):
         return axes
 
     def lock_in_faded_grid(self, dimness=0.7, axes_dimness=0.5):
+        '''添加默认坐标系，并锁定背景'''
         plane = self.add_plane()
         axes = plane.get_axes()
         plane.fade(dimness)
@@ -70,6 +76,7 @@ class VectorScene(Scene):
         self.freeze_background()
 
     def get_vector(self, numerical_vector, **kwargs):
+        '''返回一个从原点到目标点的 ``Arrow`` 实例'''
         return Arrow(
             self.plane.coords_to_point(0, 0),
             self.plane.coords_to_point(*numerical_vector[:2]),
@@ -78,6 +85,7 @@ class VectorScene(Scene):
         )
 
     def add_vector(self, vector, color=YELLOW, animate=True, **kwargs):
+        '''动态绘制一个向量'''
         if not isinstance(vector, Arrow):
             vector = Vector(vector, color=color, **kwargs)
         if animate:
@@ -86,11 +94,13 @@ class VectorScene(Scene):
         return vector
 
     def write_vector_coordinates(self, vector, **kwargs):
+        '''动态绘制坐标系'''
         coords = vector_coordinate_label(vector, **kwargs)
         self.play(Write(coords))
         return coords
 
     def get_basis_vectors(self, i_hat_color=X_COLOR, j_hat_color=Y_COLOR):
+        '''返回两个单位向量的组合'''
         return VGroup(*[
             Vector(
                 vect,
@@ -104,6 +114,7 @@ class VectorScene(Scene):
         ])
 
     def get_basis_vector_labels(self, **kwargs):
+        '''返回两个单位向量的文本描述 :math:`\\hat{\\imath}` , :math:`\\hat{\\jmath}` '''
         i_hat, j_hat = self.get_basis_vectors()
         return VGroup(*[
             self.get_vector_label(
@@ -123,6 +134,7 @@ class VectorScene(Scene):
                          rotate=False,
                          color=None,
                          label_scale_factor=VECTOR_LABEL_SCALE_FACTOR):
+        '''返回向量文本描述'''
         if not isinstance(label, Tex):
             if len(label) == 1:
                 label = "\\vec{\\textbf{%s}}" % label
@@ -150,6 +162,7 @@ class VectorScene(Scene):
         return label
 
     def label_vector(self, vector, label, animate=True, **kwargs):
+        '''播放向量文本描述动画'''
         label = self.get_vector_label(vector, label, **kwargs)
         if animate:
             self.play(Write(label, run_time=1))
@@ -167,6 +180,7 @@ class VectorScene(Scene):
         return y_coord
 
     def coords_to_vector(self, vector, coords_start=2 * RIGHT + 2 * UP, clean_up=True):
+        '''怀疑有一点小问题，应该稍微把这里的 Matrix 改一改，读者可以自己尝试一下'''
         starting_mobjects = list(self.mobjects)
         array = Matrix(vector)
         array.shift(coords_start)
@@ -200,6 +214,7 @@ class VectorScene(Scene):
             self.add(*starting_mobjects)
 
     def vector_to_coords(self, vector, integer_labels=True, clean_up=True):
+        '''怀疑有一点小问题，应该稍微改一改，读者可以自己尝试一下'''
         starting_mobjects = list(self.mobjects)
         show_creation = False
         if isinstance(vector, Arrow):
@@ -250,6 +265,7 @@ class VectorScene(Scene):
         return array, x_line, y_line
 
     def show_ghost_movement(self, vector):
+        '''应该把 VMobject 改成 VGroup，显示一系列点集按照 vector 方向移动的轨迹'''
         if isinstance(vector, Arrow):
             vector = vector.get_end() - vector.get_start()
         elif len(vector) == 2:
@@ -275,6 +291,7 @@ class VectorScene(Scene):
 
 
 class LinearTransformationScene(VectorScene):
+    ''''''
     CONFIG = {
         "include_background_plane": True,
         "include_foreground_plane": True,

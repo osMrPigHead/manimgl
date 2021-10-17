@@ -12,17 +12,25 @@ DEFAULT_FADE_LAG_RATIO = 0
 
 
 class Fade(Transform):
+    '''淡化'''
     CONFIG = {
         "lag_ratio": DEFAULT_FADE_LAG_RATIO,
     }
 
     def __init__(self, mobject, shift=ORIGIN, scale=1, **kwargs):
+        '''
+        - ``scale`` : 缩放倍数
+        - ``shift`` : 移动向量
+        '''
         self.shift_vect = shift
         self.scale_factor = scale
         super().__init__(mobject, **kwargs)
 
 
 class FadeIn(Fade):
+    '''
+    淡入
+    '''
     CONFIG = {
         "lag_ratio": DEFAULT_FADE_LAG_RATIO,
     }
@@ -39,6 +47,9 @@ class FadeIn(Fade):
 
 
 class FadeOut(Fade):
+    '''
+    淡出
+    '''
     CONFIG = {
         "remover": True,
         # Put it back in original state when done
@@ -54,7 +65,9 @@ class FadeOut(Fade):
 
 
 class FadeInFromPoint(FadeIn):
+    '''从传入的一个坐标点淡入'''
     def __init__(self, mobject, point, **kwargs):
+        ''''''
         super().__init__(
             mobject,
             shift=mobject.get_center() - point,
@@ -64,7 +77,9 @@ class FadeInFromPoint(FadeIn):
 
 
 class FadeOutToPoint(FadeOut):
+    '''淡出到指定的坐标点'''
     def __init__(self, mobject, point, **kwargs):
+        ''''''
         super().__init__(
             mobject,
             shift=point - mobject.get_center(),
@@ -74,6 +89,7 @@ class FadeOutToPoint(FadeOut):
 
 
 class FadeTransform(Transform):
+    '''渐变'''
     CONFIG = {
         "stretch": True,
         "dim_to_match": 1,
@@ -119,6 +135,7 @@ class FadeTransform(Transform):
 
 
 class FadeTransformPieces(FadeTransform):
+    '''子物件分别渐变为目标'''
     def begin(self):
         self.mobject[0].align_family(self.mobject[1])
         super().begin()
@@ -157,6 +174,7 @@ class VFadeOut(VFadeIn):
 
 
 class VFadeInThenOut(VFadeIn):
+    '''淡入后淡出'''
     CONFIG = {
         "rate_func": there_and_back,
         "remover": True,

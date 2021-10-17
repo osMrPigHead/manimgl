@@ -19,10 +19,13 @@ from manimlib.utils.color import rgb_to_color, color_to_rgba, rgb_to_hex
 
 class MotionMobject(Mobject):
     """
-        You could hold and drag this object to any position
+    可以用鼠标拖拽移动的物件
     """
 
     def __init__(self, mobject, **kwargs):
+        '''
+        传入一个 ``mobject`` 将这个物件封装成可以移动的
+        '''
         super().__init__(**kwargs)
         assert(isinstance(mobject, Mobject))
         self.mobject = mobject
@@ -38,12 +41,14 @@ class MotionMobject(Mobject):
 
 class Button(Mobject):
     """
-        Pass any mobject and register an on_click method
-
-        The on_click method takes mobject as argument like updater
+    按钮
     """
-
     def __init__(self, mobject, on_click, **kwargs):
+        '''
+        传入一个 ``mobject``，并注册一个 ``on_click`` 方法
+
+        ``on_click`` 方法的参数列表中包含一个 ``mobject``，该响应函数需要读者自行定义
+        '''
         super().__init__(**kwargs)
         assert(isinstance(mobject, Mobject))
         self.on_click = on_click
@@ -59,7 +64,13 @@ class Button(Mobject):
 # Controls
 
 class ControlMobject(ValueTracker):
+    '''
+    变量控制器（以下几个类的基类）
+    '''
     def __init__(self, value, *mobjects, **kwargs):
+        '''
+        ``value`` 作为实例的成员变量，``mobjects`` 作为窗口中可以看到的物件
+        '''
         super().__init__(value=value, **kwargs)
         self.add(*mobjects)
 
@@ -82,6 +93,9 @@ class ControlMobject(ValueTracker):
 
 
 class EnableDisableButton(ControlMobject):
+    '''
+    启用/禁用按钮
+    '''
     CONFIG = {
         "value_type": np.dtype(bool),
         "rect_kwargs": {
@@ -94,6 +108,16 @@ class EnableDisableButton(ControlMobject):
     }
 
     def __init__(self, value=True, **kwargs):
+        '''
+        传入一个 ``boolean`` 值，作为它的变量；以矩形为按钮
+
+        - ``rect_kwargs`` 控制矩形的长、宽、透明度
+            - ``width`` : 宽度
+            - ``height`` : 高度
+            - ``fill_opacity`` : 透明度
+        - ``enable_color`` : 启用时颜色
+        - ``disable_color`` : 禁用时颜色
+        '''
         digest_config(self, kwargs)
         self.box = Rectangle(**self.rect_kwargs)
         super().__init__(value, self.box, **kwargs)
@@ -117,6 +141,9 @@ class EnableDisableButton(ControlMobject):
 
 
 class Checkbox(ControlMobject):
+    '''
+    复选框
+    '''
     CONFIG = {
         "value_type": np.dtype(bool),
         "rect_kwargs": {
@@ -137,6 +164,12 @@ class Checkbox(ControlMobject):
     }
 
     def __init__(self, value=True, **kwargs):
+        '''
+        功能与 启用/禁用按钮 类似
+
+        - ``checkmark_kwargs`` : 控制✅外形的参数
+        - ``cross_kwargs`` : 控制❌外形的参数
+        '''
         digest_config(self, kwargs)
         self.box = Rectangle(**self.rect_kwargs)
         self.box_content = self.get_checkmark() if value else self.get_cross()
@@ -187,6 +220,9 @@ class Checkbox(ControlMobject):
 
 
 class LinearNumberSlider(ControlMobject):
+    '''
+    线性滑动条
+    '''
     CONFIG = {
         "value_type": np.float64,
         "min_value": -10.0,
@@ -207,6 +243,15 @@ class LinearNumberSlider(ControlMobject):
     }
 
     def __init__(self, value=0, **kwargs):
+        '''
+        传入一个初始值，其他在参数中给出
+
+        - ``min_value`` : 最小值
+        - ``max_value`` : 最大值
+        - ``step`` : 步进
+        - ``rounded_rect_kwargs`` : 滑动条外形参数
+        - ``circle_kwargs`` : 滑块外形参数
+        '''
         digest_config(self, kwargs)
         self.bar = RoundedRectangle(**self.rounded_rect_kwargs)
         self.slider = Circle(**self.circle_kwargs)
@@ -245,6 +290,9 @@ class LinearNumberSlider(ControlMobject):
 
 
 class ColorSliders(Group):
+    '''
+    RGBA 颜色滑动条
+    '''
     CONFIG = {
         "sliders_kwargs": {},
         "rect_kwargs": {
@@ -262,6 +310,9 @@ class ColorSliders(Group):
     }
 
     def __init__(self, **kwargs):
+        '''
+        创建后包含 RGBA 四个滑动条，分别对应 RGBA 值
+        '''
         digest_config(self, kwargs)
 
         rgb_kwargs = {"value": self.default_rgb_value, "min_value": 0, "max_value": 255, "step": 1}
@@ -323,12 +374,14 @@ class ColorSliders(Group):
         return grid
 
     def set_value(self, r, g, b, a):
+        '''设置 RGBA 值'''
         self.r_slider.set_value(r)
         self.g_slider.set_value(g)
         self.b_slider.set_value(b)
         self.a_slider.set_value(a)
 
     def get_value(self):
+        '''获取 RGBA 值'''
         r = self.r_slider.get_value() / 255
         g = self.g_slider.get_value() / 255
         b = self.b_slider.get_value() / 255
@@ -336,15 +389,18 @@ class ColorSliders(Group):
         return color_to_rgba(rgb_to_color((r, g, b)), alpha=alpha)
 
     def get_picked_color(self):
+        '''获取当前选色器颜色的 16 进制（不包含透明度）'''
         rgba = self.get_value()
         return rgb_to_hex(rgba[:3])
 
     def get_picked_opacity(self):
+        ''''获取当前选色器颜色透明度'''
         rgba = self.get_value()
         return rgba[3]
 
 
 class Textbox(ControlMobject):
+    '''文本框'''
     CONFIG = {
         "value_type": np.dtype(object),
 
@@ -364,6 +420,11 @@ class Textbox(ControlMobject):
     }
 
     def __init__(self, value="", **kwargs):
+        '''
+        - ``box_kwargs`` : 文本框外框参数
+        - ``text_kwargs`` : 文本参数
+
+        注意：初值不要为空字符串'''
         digest_config(self, kwargs)
         self.isActive = self.isInitiallyActive
         self.box = Rectangle(**self.box_kwargs)
@@ -401,6 +462,7 @@ class Textbox(ControlMobject):
         return False
 
     def on_key_press(self, mob, event_data):
+        '''键盘按下响应'''
         symbol = event_data["symbol"]
         modifiers = event_data["modifiers"]
         char = chr(symbol)
@@ -423,6 +485,7 @@ class Textbox(ControlMobject):
 
 
 class ControlPanel(Group):
+    '''控制面板'''
     CONFIG = {
         "panel_kwargs": {
             "width": FRAME_WIDTH / 4,
@@ -444,6 +507,25 @@ class ControlPanel(Group):
     }
 
     def __init__(self, *controls, **kwargs):
+        '''
+        传入一些变量控制器，将它们放在控制面板上
+        
+        这样整个控制面板就像一个“抽屉”，panel 为抽屉本体，opener 为抽屉的把手
+
+        可以用鼠标点击拖拽/鼠标滚轮来移动控制面板
+
+        - ``panel_kwargs`` : 主面板参数
+            - ``width`` : 宽度
+            - ``height`` : 高度
+        - ``opener_kwargs`` : 把手参数
+            - ``width`` : 宽度
+            - ``height`` : 高度
+            - ``fill_color`` : 填充色
+            - ``fill_opacity`` : 透明度
+        - ``opener_text_kwargs`` : 把手文字参数
+            - ``text`` : 把手文本
+            - ``font_size`` : 字号
+        '''
         digest_config(self, kwargs)
 
         self.panel = Rectangle(**self.panel_kwargs)
@@ -489,14 +571,17 @@ class ControlPanel(Group):
         self.controls.set_x(controls_old_x)
 
     def add_controls(self, *new_controls):
+        '''添加新控制器'''
         self.controls.add(*new_controls)
         self.move_panel_and_controls_to_panel_opener()
 
     def remove_controls(self, *controls_to_remove):
+        '''移除控制器'''
         self.controls.remove(*controls_to_remove)
         self.move_panel_and_controls_to_panel_opener()
 
     def open_panel(self):
+        '''打开控制面板'''
         panel_opener_x = self.panel_opener.get_x()
         self.panel_opener.to_corner(DOWN + LEFT, buff=0.0)
         self.panel_opener.set_x(panel_opener_x)
@@ -504,6 +589,7 @@ class ControlPanel(Group):
         return self
 
     def close_panel(self):
+        '''关闭控制面板'''
         panel_opener_x = self.panel_opener.get_x()
         self.panel_opener.to_corner(UP + LEFT, buff=0.0)
         self.panel_opener.set_x(panel_opener_x)
