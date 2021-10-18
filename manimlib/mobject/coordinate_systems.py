@@ -24,8 +24,7 @@ class CoordinateSystem():
     """
     Axes 和 NumberPlane 的抽象基类
 
-    - ``x_range`` 和 ``y_range`` 控制坐标轴范围和分割精度
-      格式为 ``x_range=[x_min, x_max, dx]``
+    - ``x_range`` 和 ``y_range`` 控制坐标轴范围和分割精度，格式为 ``x_range=[x_min, x_max, dx]``
     - ``width`` 和 ``height`` 控制坐标轴的宽度和高度
     """
     CONFIG = {
@@ -59,6 +58,7 @@ class CoordinateSystem():
         return self.point_to_coords(point)
 
     def get_origin(self):
+        '''获取坐标原点的绝对坐标'''
         return self.c2p(*[0] * self.dimension)
 
     def get_axes(self):
@@ -148,6 +148,7 @@ class CoordinateSystem():
         return graph
 
     def get_parametric_curve(self, function, **kwargs):
+        '''传入一个参数方程，绘制一条参数曲线'''
         dim = self.dimension
         graph = ParametricCurve(
             lambda t: self.coords_to_point(*function(t)[:dim]),
@@ -357,6 +358,7 @@ class Axes(VGroup, CoordinateSystem):
         return axis
 
     def coords_to_point(self, *coords):
+        """输入坐标轴上的二维坐标，返回场景的绝对坐标，(x, y) -> array[x', y', 0]"""
         origin = self.x_axis.number_to_point(0)
         result = origin.copy()
         for axis, coord in zip(self.get_axes(), coords):
@@ -364,15 +366,18 @@ class Axes(VGroup, CoordinateSystem):
         return result
 
     def point_to_coords(self, point):
+        """输入场景的绝对坐标，返回坐标轴上的二维坐标，array[x, y, 0] -> (x', y')"""
         return tuple([
             axis.point_to_number(point)
             for axis in self.get_axes()
         ])
 
     def get_axes(self):
+        '''获取坐标系'''
         return self.axes
 
     def get_all_ranges(self):
+        '''获取 x 和 y 的范围'''
         return [self.x_range, self.y_range]
 
     def add_coordinate_labels(self,
@@ -406,8 +411,7 @@ class ThreeDAxes(Axes):
 
     def __init__(self, x_range=None, y_range=None, z_range=None, **kwargs):
         '''
-        - ``x_range``, ``y_range``, ``z_range`` 控制坐标轴范围和分割精度
-          格式为 ``x_range=[x_min, x_max, dx]``
+        - ``x_range``, ``y_range``, ``z_range`` 控制坐标轴范围和分割精度，格式为 ``x_range=[x_min, x_max, dx]``
         - ``width``, ``height``, ``depth`` 控制坐标轴的宽度、高度、深度
         '''
         Axes.__init__(self, x_range, y_range, **kwargs)
@@ -572,6 +576,7 @@ class ComplexPlane(NumberPlane):
         return [*x_numbers, *y_numbers]
 
     def add_coordinate_labels(self, numbers=None, skip_first=True, **kwargs):
+        '''给坐标轴加上数字'''
         if numbers is None:
             numbers = self.get_default_coordinate_values(skip_first)
 

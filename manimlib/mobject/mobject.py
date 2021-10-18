@@ -102,11 +102,13 @@ class Mobject(object):
         pass
 
     def set_data(self, data):
+        '''设置成员数据，以字典形式传入'''
         for key in data:
             self.data[key] = data[key].copy()
         return self
 
     def set_uniforms(self, uniforms):
+        '''设置 uniform 变量，以字典形式传入'''
         for key in uniforms:
             self.uniforms[key] = uniforms[key]  # Copy?
         return self
@@ -119,6 +121,7 @@ class Mobject(object):
     # Only these methods should directly affect points
 
     def resize_points(self, new_length, resize_func=resize_array):
+        '''重置锚点数组大小'''
         if new_length != len(self.data["points"]):
             self.data["points"] = resize_func(self.data["points"], new_length)
         self.refresh_bounding_box()
@@ -355,7 +358,7 @@ class Mobject(object):
         '''将子物件按表格方式排列
 
         - ``n_rows``, ``n_cols`` : 行数、列数
-        - ``v_buff``,``h_buff`` : 行距、列距
+        - ``v_buff``, ``h_buff`` : 行距、列距
         - ``aligned_edge`` : 对齐边缘
         '''
         submobs = self.submobjects
@@ -502,6 +505,7 @@ class Mobject(object):
         self.updating_suspended = False
 
     def update(self, dt=0, recurse=True):
+        '''更新物件状态，为 **动画 (Animation)** 、 **更新 (updater)** 调用'''
         if not self.has_updaters or self.updating_suspended:
             return self
         for updater in self.time_based_updaters:
@@ -604,7 +608,7 @@ class Mobject(object):
 
     def scale(self, scale_factor, min_scale_factor=1e-8, about_point=None, about_edge=ORIGIN):
         """
-        放大 (缩小) 到原来的 ``scale_factor`` 倍，``kwargs`` 中可以传入 ``about_point/about_edge``
+        放大 (缩小) 到原来的 ``scale_factor`` 倍，可以传入 ``about_point/about_edge``
         """
         scale_factor = max(scale_factor, min_scale_factor)
         self.apply_points_function(
@@ -806,34 +810,43 @@ class Mobject(object):
         return self
 
     def stretch_to_fit_width(self, width, **kwargs):
+        '''拉伸以适应宽度'''
         return self.rescale_to_fit(width, 0, stretch=True, **kwargs)
 
     def stretch_to_fit_height(self, height, **kwargs):
+        '''拉伸以适应高度'''
         return self.rescale_to_fit(height, 1, stretch=True, **kwargs)
 
     def stretch_to_fit_depth(self, depth, **kwargs):
+        '''拉伸以适应深度'''
         return self.rescale_to_fit(depth, 2, stretch=True, **kwargs)
 
     def set_width(self, width, stretch=False, **kwargs):
+        '''保持原比例设置宽度'''
         return self.rescale_to_fit(width, 0, stretch=stretch, **kwargs)
 
     def set_height(self, height, stretch=False, **kwargs):
+        '''保持原比例设置高度'''
         return self.rescale_to_fit(height, 1, stretch=stretch, **kwargs)
 
     def set_depth(self, depth, stretch=False, **kwargs):
+        '''保持原比例设置深度'''
         return self.rescale_to_fit(depth, 2, stretch=stretch, **kwargs)
 
     def set_max_width(self, max_width, **kwargs):
+        '''设置最大宽度'''
         if self.get_width() > max_width:
             self.set_width(max_width, **kwargs)
         return self
 
     def set_max_height(self, max_height, **kwargs):
+        '''设置最大高度'''
         if self.get_height() > max_height:
             self.set_height(max_height, **kwargs)
         return self
 
     def set_max_depth(self, max_depth, **kwargs):
+        '''设置最大深度'''
         if self.get_depth() > max_depth:
             self.set_depth(max_depth, **kwargs)
         return self
@@ -1039,7 +1052,7 @@ class Mobject(object):
         return self
 
     def get_shadow(self):
-        '''阴影光泽'''
+        '''获取阴影'''
         return self.uniforms["shadow"]
 
     def set_shadow(self, shadow, recurse=True):

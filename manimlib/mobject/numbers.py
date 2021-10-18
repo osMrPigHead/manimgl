@@ -8,7 +8,7 @@ string_to_mob_map = {}
 
 
 class DecimalNumber(VMobject):
-    '''十进制数'''
+    '''十进制（浮点）数'''
     CONFIG = {
         "stroke_width": 0,
         "fill_opacity": 1.0,

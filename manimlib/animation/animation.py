@@ -12,6 +12,7 @@ DEFAULT_ANIMATION_LAG_RATIO = 0
 
 
 class Animation(object):
+    '''动画类（基类）'''
     CONFIG = {
         "run_time": DEFAULT_ANIMATION_RUN_TIME,
         "rate_func": smooth,
@@ -40,6 +41,7 @@ class Animation(object):
         return self.__class__.__name__ + str(self.mobject)
 
     def begin(self):
+        # 在动画开始之时会先调用该方法，在这个方法中各种物件的状态、物件的拷贝会进行初始化，为动画的播放做准备
         # This is called right as an animation is being
         # played.  As much initialization as possible,
         # especially any mobject copying, should live in
@@ -57,11 +59,13 @@ class Animation(object):
         self.interpolate(0)
 
     def finish(self):
+        # 在动画结束之时调用，处理收尾工作
         self.interpolate(self.final_alpha_value)
         if self.suspend_mobject_updating:
             self.mobject.resume_updating()
 
     def clean_up_from_scene(self, scene):
+        # 从场景中清除
         if self.is_remover():
             scene.remove(self.mobject)
 
@@ -70,9 +74,7 @@ class Animation(object):
         return self.mobject.copy()
 
     def get_all_mobjects(self):
-        """
-        Ordering must match the ording of arguments to interpolate_submobject
-        """
+        # 获取物件以及在动画开始前的一份拷贝
         return self.mobject, self.starting_mobject
 
     def get_all_families_zipped(self):

@@ -39,6 +39,7 @@ class ShowPartial(Animation):
 
 
 class ShowCreation(ShowPartial):
+    '''显示创建过程'''
     CONFIG = {
         "lag_ratio": 1,
     }
@@ -48,6 +49,7 @@ class ShowCreation(ShowPartial):
 
 
 class Uncreate(ShowCreation):
+    '''显示销毁过程（ ``ShowCreation`` 的倒放）'''
     CONFIG = {
         "rate_func": lambda t: smooth(1 - t),
         "remover": True,
@@ -56,6 +58,7 @@ class Uncreate(ShowCreation):
 
 
 class DrawBorderThenFill(Animation):
+    '''画出边缘，然后填充颜色'''
     CONFIG = {
         "run_time": 2,
         "rate_func": double_smooth,
@@ -126,6 +129,7 @@ class DrawBorderThenFill(Animation):
 
 
 class Write(DrawBorderThenFill):
+    '''写（对子物件逐个使用 ``DrawBorderThenFill`` ）'''
     CONFIG = {
         # To be figured out in
         # set_default_config_from_lengths

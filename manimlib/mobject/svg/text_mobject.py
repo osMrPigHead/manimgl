@@ -396,12 +396,6 @@ class MarkupText(SVGMobject):
         删去 ``<color>`` 标签，因为这些标签不是 Pango 的标记，并且会导致错误
 
         注意：不建议使用 ``<color>`` 标签。一旦遗留语法消失，这个函数将被删除。
-
-        Used to determine which parts (if any) of the string should be formatted
-        with a custom color.
-        Removes the ``<color>`` tag, as it is not part of Pango's markup and would cause an error.
-        Note: Using the ``<color>`` tags is deprecated. As soon as the legacy syntax is gone, this function
-        will be removed.
         """
         if not text:
             text = self.text_for_parsing
@@ -455,10 +449,6 @@ class MarkupText(SVGMobject):
         用于确定哪一部分的字符串应该被上色
 
         删去 ``<gradient>`` 标签，因为这些标签不是 Pango 的标记，并且会导致错误
-
-        Used to determine which parts (if any) of the string should be formatted
-        with a gradient.
-        Removes the ``<gradient>`` tag, as it is not part of Pango's markup and would cause an error.
         """
         if not text:
             text = self.text_for_parsing
@@ -526,7 +516,14 @@ class Code(Text):
     }
 
     def __init__(self, code, **kwargs):
-        '''使用 ``pygments`` 模块生成带有颜色标签的文本'''
+        '''使用 ``pygments`` 模块生成带有颜色、倾斜标签的文本，并进行格式化
+
+        - ``font`` : 字体
+        - ``font_size`` : 字号
+        - ``language`` : 代码的编程语言
+        - ``code_style`` : 语法高亮样式，默认为 'monokai'，更多样式可以查看 `pygments 官网 <https://pygments.org/>`_
+        - ``char_width`` : 字符宽度
+        '''
         self.full2short(kwargs)
         digest_config(self, kwargs)
         code = code.lstrip("\n")  # avoid mismatches of character indices

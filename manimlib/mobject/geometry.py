@@ -163,18 +163,21 @@ class TipableVMobject(VMobject):
         return self.get_points()[-2]
 
     def get_end(self):
+        '''获取物件结束点'''
         if self.has_tip():
             return self.tip.get_start()
         else:
             return VMobject.get_end(self)
 
     def get_start(self):
+        '''获取物件起始点'''
         if self.has_start_tip():
             return self.start_tip.get_start()
         else:
             return VMobject.get_start(self)
 
     def get_length(self):
+        '''获取起止点之间的直线距离'''
         start, end = self.get_start_and_end()
         return get_norm(start - end)
 
@@ -242,10 +245,12 @@ class Arc(TipableVMobject):
         return find_intersection(a1, n1, a2, n2)
 
     def get_start_angle(self):
+        '''获取起始角度'''
         angle = angle_of_vector(self.get_start() - self.get_arc_center())
         return angle % TAU
 
     def get_stop_angle(self):
+        '''获取终止角度'''
         angle = angle_of_vector(self.get_end() - self.get_arc_center())
         return angle % TAU
 
@@ -394,7 +399,7 @@ class AnnularSector(Arc):
 class Sector(AnnularSector):
     """扇形
     
-    即内圆半径为0的扇环
+    即内圆半径为 0 的扇环
     """
     CONFIG = {
         "outer_radius": 1,
@@ -874,7 +879,7 @@ class Vector(Arrow):
     def __init__(self, direction=RIGHT, **kwargs):
         """即起点为ORIGIN的箭头，终点为 ``direction``
         
-        - ``buff`` 默认设为了0
+        - ``buff`` 默认设为了 0
         """
         if len(direction) == 2:
             direction = np.hstack([direction, 0])
@@ -1014,9 +1019,11 @@ class ArrowTip(Triangle):
         self.rotate(self.angle)
 
     def get_base(self):
+        '''获取箭头尾部的点'''
         return self.point_from_proportion(0.5)
 
     def get_tip_point(self):
+        '''获取箭头首部的点'''
         return self.get_points()[0]
 
     def get_vector(self):

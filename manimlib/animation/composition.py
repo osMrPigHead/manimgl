@@ -14,6 +14,7 @@ DEFAULT_LAGGED_START_LAG_RATIO = 0.05
 
 
 class AnimationGroup(Animation):
+    '''动画组，可以传入一系列动画，统一播放'''
     CONFIG = {
         # If None, this defaults to the sum of all
         # internal animations
@@ -70,8 +71,7 @@ class AnimationGroup(Animation):
 
     def build_animations_with_timings(self):
         """
-        Creates a list of triplets of the form
-        (anim, start_time, end_time)
+        创建表单的三元组列表 (anim, start_time, end_time)
         """
         self.anims_with_timings = []
         curr_time = 0
@@ -107,6 +107,7 @@ class AnimationGroup(Animation):
 
 
 class Succession(AnimationGroup):
+    '''使子动画逐一播放'''
     CONFIG = {
         "lag_ratio": 1,
     }
@@ -136,12 +137,14 @@ class Succession(AnimationGroup):
 
 
 class LaggedStart(AnimationGroup):
+    '''可以统一控制 ``lag_ratio`` 的动画组'''
     CONFIG = {
         "lag_ratio": DEFAULT_LAGGED_START_LAG_RATIO,
     }
 
 
 class LaggedStartMap(LaggedStart):
+    '''统一控制 **动画类**、 ``mobjects``、 ``lag_ratio`` 的动画组'''
     CONFIG = {
         "run_time": 2,
     }

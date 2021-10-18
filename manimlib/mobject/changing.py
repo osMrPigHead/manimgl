@@ -29,7 +29,8 @@ class AnimatedBoundary(VGroup):
     
         - ``colors`` 表示变化中出现的颜色
         - ``max_stroke_width`` 表示边界最大的粗细
-        - ``cycle_rate`` 表示循环率'''
+        - ``cycle_rate`` 表示循环率
+        '''
         super().__init__(**kwargs)
         self.vmobject = vmobject
         self.boundary_copies = [

@@ -41,6 +41,7 @@ class CameraFrame(Mobject):
         self.move_to(self.center_point)
 
     def to_default_state(self):
+        '''相机恢复到默认位置'''
         self.center()
         self.set_height(FRAME_HEIGHT)
         self.set_width(FRAME_WIDTH)
@@ -70,7 +71,7 @@ class CameraFrame(Mobject):
         added_rot_T = rotation_matrix_transpose(angle, axis)
         new_rot_T = np.dot(curr_rot_T, added_rot_T)
         Fz = new_rot_T[2]
-        phi = np.arccos(Fz[2])
+        phi = np.arccos(clip(Fz[2], -1, 1))
         theta = angle_of_vector(Fz[:2]) + PI / 2
         partial_rot_T = np.dot(
             rotation_matrix_transpose(phi, RIGHT),
@@ -185,6 +186,11 @@ class Camera(object):
     def __init__(self, ctx=None, **kwargs):
         '''
         - ``frame_config`` : 相机帧参数
+        - ``pixel_width`` : 像素宽度，默认 1920
+        - ``pixel_height`` : 像素高度，默认 1080
+        - ``frame_rate`` : 相机帧率，默认 30
+        - ``light_source_position`` : 光源位置
+        - ``anti_alias_width`` : 抗锯齿
         '''
         digest_config(self, kwargs, locals())
         self.rgb_max_val = np.iinfo(self.pixel_array_dtype).max
@@ -250,6 +256,7 @@ class Camera(object):
         self.fbo_msaa.clear(*self.background_rgba)
 
     def reset_pixel_shape(self, new_width, new_height):
+        '''重置像素宽高'''
         self.pixel_width = new_width
         self.pixel_height = new_height
         self.refresh_perspective_uniforms()
@@ -483,7 +490,7 @@ class Camera(object):
         self.path_to_texture = {}
 
     def get_texture_id(self, path):
-        '''获取材质 id'''
+        '''获取资源 id'''
         if path not in self.path_to_texture:
             tid = self.n_textures
             self.n_textures += 1
@@ -498,6 +505,7 @@ class Camera(object):
         return self.path_to_texture[path][0]
 
     def release_texture(self, path):
+        '''释放资源'''
         tid_and_texture = self.path_to_texture.pop(path, None)
         if tid_and_texture:
             tid_and_texture[1].release()
