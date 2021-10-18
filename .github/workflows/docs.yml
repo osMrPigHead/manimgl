@@ -12,7 +12,7 @@ jobs:
       uses: actions/checkout@master
     
     - name: Create update file
-      run: echo "update" `date +"%Y-%m-%d %H:%M:%S"` > update
+      run: echo "update UTC" `date +"%Y-%m-%d %H:%M:%S"` > update
     
     - name: Push update file to manim_document_zh
       uses: dmnemec/copy_file_to_another_repo_action@3fe42250d47e0764da9de9939b151b09a26e5857
@@ -25,25 +25,24 @@ jobs:
         user_email: 'tonycrane@foxmail.com'
         user_name: 'TonyCrane'
 
+    - name: Install sphinx and manim env
+      run: |
+        pip3 install --upgrade pip
+        sudo apt install python3-setuptools libpango1.0-dev
+        pip3 install -r docs/requirements.txt
+        pip3 install .
     
-    # - name: Install sphinx and manim env
-    #   run: |
-    #     pip3 install --upgrade pip
-    #     sudo apt install python3-setuptools libpango1.0-dev
-    #     pip3 install -r docs/requirements.txt
-    #     pip3 install .
-    
-    # - name: Build document with Sphinx
-    #   run: |
-    #     cd docs
-    #     export PATH="$PATH:/home/runner/.local/bin"
-    #     export SPHINXBUILD="python3 -m sphinx"
-    #     make html
+    - name: Build document with Sphinx
+      run: |
+        cd docs
+        export PATH="$PATH:/home/runner/.local/bin"
+        export SPHINXBUILD="python3 -m sphinx"
+        make html
         
-    # - name: Deploy to GitHub pages
-    #   if: ${{ github.event_name == 'push' }}
-    #   uses: JamesIves/github-pages-deploy-action@3.7.1
-    #   with:
-    #     ACCESS_TOKEN: ${{ secrets.DOC_DEPLOY_TOKEN }}
-    #     BRANCH: gh-pages
-    #     FOLDER: docs/build/html
+    - name: Deploy to GitHub pages
+      if: ${{ github.event_name == 'push' }}
+      uses: JamesIves/github-pages-deploy-action@3.7.1
+      with:
+        ACCESS_TOKEN: ${{ secrets.DOC_DEPLOY_TOKEN }}
+        BRANCH: gh-pages
+        FOLDER: docs/build/html
