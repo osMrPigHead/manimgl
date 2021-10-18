@@ -4,11 +4,11 @@ sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath('../../'))
 
 
-project = 'manim shaders'
+project = 'ManimGL'
 copyright = '2020-2021 Manim Kindergarten Team'
-author = 'TonyCrane'
+author = 'TonyCrane & widcardw'
 
-version = '0.0.2'
+version = '0.1.0'
 release = ''
 
 extensions = [
