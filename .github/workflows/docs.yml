@@ -21,6 +21,7 @@ jobs:
       with:
         source_file: 'update'
         destination_repo: 'manim-kindergarten/manim_document_zh'
+        destination_branch: 'master'
         user_email: 'tonycrane@foxmail.com'
         user_name: 'TonyCrane'
 
