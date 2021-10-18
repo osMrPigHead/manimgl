@@ -28,6 +28,7 @@ class Checkmark(TexText):
     }
 
     def __init__(self, **kwargs):
+        '''使用了 LaTex 的 ``\\\\ding\\{51\\}``'''
         super().__init__("\\ding{51}")
 
 
@@ -38,11 +39,12 @@ class Exmark(TexText):
     }
 
     def __init__(self, **kwargs):
+        '''使用了 LaTex 的 ``\\\\ding\\{55\\}``'''
         super().__init__("\\ding{55}")
 
 
 class Lightbulb(SVGMobject):
-    '''💡 无 SVG'''
+    '''💡'''
     CONFIG = {
         "height": 1,
         "stroke_color": YELLOW,
@@ -52,6 +54,7 @@ class Lightbulb(SVGMobject):
     }
 
     def __init__(self, **kwargs):
+        '''暂无 SVG，如有需求可以去 Grant 那里区'''
         super().__init__("lightbulb", **kwargs)
 
 
@@ -65,6 +68,10 @@ class Speedometer(VMobject):
         "needle_height": 0.8,
         "needle_color": YELLOW,
     }
+
+    def __init__(self, **kwargs):
+        '''使用纯 VMobject 构建，可直接使用'''
+        super().__init__(**kwargs)
 
     def init_points(self):
         start_angle = np.pi / 2 + self.arc_angle / 2
@@ -115,6 +122,7 @@ class Speedometer(VMobject):
         return self
 
     def move_needle_to_velocity(self, velocity):
+        '''将指针旋转至指定速度'''
         max_velocity = 10 * (self.num_ticks - 1)
         proportion = float(velocity) / max_velocity
         start_angle = np.pi / 2 + self.arc_angle / 2
@@ -145,6 +153,7 @@ class Laptop(VGroup):
     }
 
     def __init__(self, **kwargs):
+        '''使用纯 VMobject 构建，可直接使用'''
         super().__init__(**kwargs)
         body = Cube(side_length=1)
         for dim, scale_factor in enumerate(self.body_dimensions):
@@ -204,13 +213,14 @@ class Laptop(VGroup):
 
 
 class VideoIcon(SVGMobject):
-    '''视频播放按钮，无 SVG'''
+    '''视频播放按钮'''
     CONFIG = {
         "file_name": "video_icon",
         "width": FRAME_WIDTH / 12.,
     }
 
     def __init__(self, **kwargs):
+        '''暂无 SVG'''
         SVGMobject.__init__(self, **kwargs)
         self.center()
         self.set_width(self.width)
@@ -219,13 +229,14 @@ class VideoIcon(SVGMobject):
 
 
 class VideoSeries(VGroup):
-    '''视频系列，无 SVG'''
+    '''视频系列'''
     CONFIG = {
         "num_videos": 11,
         "gradient_colors": [BLUE_B, BLUE_D],
     }
 
     def __init__(self, **kwargs):
+        '''暂无 SVG'''
         digest_config(self, kwargs)
         videos = [VideoIcon() for x in range(self.num_videos)]
         VGroup.__init__(self, *videos, **kwargs)
@@ -239,6 +250,7 @@ class Clock(VGroup):
     CONFIG = {}
 
     def __init__(self, **kwargs):
+        '''对应有 ``ClockPassesTime`` 用于控制时钟前进'''
         circle = Circle(color=WHITE)
         ticks = []
         for x in range(12):
@@ -303,7 +315,7 @@ class ClockPassesTime(Animation):
 
 
 class Bubble(SVGMobject):
-    '''气泡，无 SVG'''
+    '''气泡'''
     CONFIG = {
         "direction": LEFT,
         "center_point": ORIGIN,
@@ -319,6 +331,7 @@ class Bubble(SVGMobject):
     }
 
     def __init__(self, **kwargs):
+        '''需要 SVG 显示'''
         digest_config(self, kwargs, locals())
         if self.file_name is None:
             raise Exception("Must invoke Bubble subclass")
@@ -401,6 +414,7 @@ class Bubble(SVGMobject):
 
 
 class SpeechBubble(Bubble):
+    '''对话气泡'''
     CONFIG = {
         "file_name": "Bubbles_speech.svg",
         "height": 4
@@ -408,6 +422,7 @@ class SpeechBubble(Bubble):
 
 
 class DoubleSpeechBubble(Bubble):
+    '''多人同时说话气泡'''
     CONFIG = {
         "file_name": "Bubbles_double_speech.svg",
         "height": 4
@@ -415,6 +430,7 @@ class DoubleSpeechBubble(Bubble):
 
 
 class ThoughtBubble(Bubble):
+    '''思考气泡'''
     CONFIG = {
         "file_name": "Bubbles_thought.svg",
     }
@@ -431,6 +447,7 @@ class ThoughtBubble(Bubble):
 
 
 class VectorizedEarth(SVGMobject):
+    '''矢量图地球'''
     CONFIG = {
         "file_name": "earth",
         "height": 1.5,
@@ -438,6 +455,7 @@ class VectorizedEarth(SVGMobject):
     }
 
     def __init__(self, **kwargs):
+        '''需要 SVG'''
         SVGMobject.__init__(self, **kwargs)
         circle = Circle(
             stroke_width=3,

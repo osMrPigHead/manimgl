@@ -93,6 +93,7 @@ def turn_animation_into_updater(animation, cycle=False, **kwargs):
 
 
 def cycle_animation(animation, **kwargs):
+    '''默认保持循环的 ``turn_animation_into_updater``'''
     return turn_animation_into_updater(
         animation, cycle=True, **kwargs
     )

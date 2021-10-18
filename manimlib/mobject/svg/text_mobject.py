@@ -29,6 +29,7 @@ DEFAULT_LINE_SPACING_SCALE = 0.6
 
 
 class Text(SVGMobject):
+    '''文字类'''
     CONFIG = {
         # Mobject
         "color": WHITE,
@@ -52,6 +53,7 @@ class Text(SVGMobject):
     }
 
     def __init__(self, text, **kwargs):
+        '''在下方给出原版文档'''
         self.full2short(kwargs)
         digest_config(self, kwargs)
         if self.size:
@@ -260,6 +262,7 @@ class Text(SVGMobject):
 
 
 class MarkupText(SVGMobject):
+    '''带标记的文本'''
     CONFIG = {
         # Mobject
         "color": WHITE,
@@ -277,6 +280,7 @@ class MarkupText(SVGMobject):
     }
 
     def __init__(self, text, **config):
+        '''用于处理带有超文本标记的文字，主要用于代码类的高亮'''
         digest_config(self, config)
         self.text = f'<span>{text}</span>'
         self.original_text = self.text
@@ -324,7 +328,7 @@ class MarkupText(SVGMobject):
             self.scale(TEXT_MOB_SCALE_FACTOR)
 
     def text2hash(self):
-        """Generates ``sha256`` hash for file name."""
+        """生成 ``sha256`` 作为文件名"""
         settings = (
             "MARKUPPANGO" + self.font + self.slant + self.weight + self.color
         )  # to differentiate from classical Pango Text
@@ -337,7 +341,7 @@ class MarkupText(SVGMobject):
         return hasher.hexdigest()[:16]
 
     def text2svg(self):
-        """Convert the text to SVG using Pango."""
+        """使用 Pango 将文本转换为 SVG 文件"""
         size = self.font_size
         dir_name = get_text_dir()
         disable_liga = self.disable_ligatures
@@ -370,7 +374,7 @@ class MarkupText(SVGMobject):
         )
 
     def _parse_color(self, col):
-        """Parse color given in ``<color>`` or ``<gradient>`` tags."""
+        """解析在 ``<color>`` 或 ``<gradient>`` 标签内的颜色"""
         if re.match("#[0-9a-f]{6}", col):
             return col
         else:
@@ -386,7 +390,14 @@ class MarkupText(SVGMobject):
         return final_text
 
     def extract_color_tags(self, text=None, colormap=None):
-        """Used to determine which parts (if any) of the string should be formatted
+        """
+        用于确定哪一部分的字符串应该被上色
+
+        删去 ``<color>`` 标签，因为这些标签不是 Pango 的标记，并且会导致错误
+
+        注意：不建议使用 ``<color>`` 标签。一旦遗留语法消失，这个函数将被删除。
+
+        Used to determine which parts (if any) of the string should be formatted
         with a custom color.
         Removes the ``<color>`` tag, as it is not part of Pango's markup and would cause an error.
         Note: Using the ``<color>`` tags is deprecated. As soon as the legacy syntax is gone, this function
@@ -440,7 +451,12 @@ class MarkupText(SVGMobject):
         return colormap
 
     def extract_gradient_tags(self, text=None, gradientmap=None):
-        """Used to determine which parts (if any) of the string should be formatted
+        """
+        用于确定哪一部分的字符串应该被上色
+
+        删去 ``<gradient>`` 标签，因为这些标签不是 Pango 的标记，并且会导致错误
+
+        Used to determine which parts (if any) of the string should be formatted
         with a gradient.
         Removes the ``<gradient>`` tag, as it is not part of Pango's markup and would cause an error.
         """
@@ -497,6 +513,7 @@ class MarkupText(SVGMobject):
 
 
 class Code(Text):
+    '''代码类'''
     CONFIG = {
         "font": "Consolas",
         "font_size": 24,
@@ -509,6 +526,7 @@ class Code(Text):
     }
 
     def __init__(self, code, **kwargs):
+        '''使用 ``pygments`` 模块生成带有颜色标签的文本'''
         self.full2short(kwargs)
         digest_config(self, kwargs)
         code = code.lstrip("\n")  # avoid mismatches of character indices

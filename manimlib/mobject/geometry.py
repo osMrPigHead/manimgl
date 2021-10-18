@@ -512,8 +512,7 @@ class Line(TipableVMobject):
 
     def pointify(self, mob_or_point, direction=None):
         '''
-        Take an argument passed into Line (or subclass) and turn
-        it into a 3d point.
+        将一个参数传递给 Line (或子类) 并将其转换为一个 3D 点。
         '''
         if isinstance(mob_or_point, Mobject):
             mob = mob_or_point
@@ -669,9 +668,7 @@ class Elbow(VMobject):
 
 class Arrow(Line):
     """
-    带箭头的直线
-
-    和 ``Line`` 相同，箭头大小自动
+    带箭头的直线，箭头大小自动
         
     - ``buff`` : 默认为0.25
     - ``max_tip_length_to_length_ratio`` : 箭头长度和直线长度最大比例（默认0.25）

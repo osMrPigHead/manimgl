@@ -291,7 +291,7 @@ class VectorScene(Scene):
 
 
 class LinearTransformationScene(VectorScene):
-    ''''''
+    '''线性变换的向量场景'''
     CONFIG = {
         "include_background_plane": True,
         "include_foreground_plane": True,
@@ -391,6 +391,7 @@ class LinearTransformationScene(VectorScene):
         return square
 
     def add_unit_square(self, animate=False, **kwargs):
+        '''添加单位正方形'''
         square = self.get_unit_square(**kwargs)
         if animate:
             self.play(
@@ -403,6 +404,7 @@ class LinearTransformationScene(VectorScene):
         return self
 
     def add_vector(self, vector, color=YELLOW, **kwargs):
+        '''添加向量'''
         vector = VectorScene.add_vector(
             self, vector, color=color, **kwargs
         )
@@ -446,6 +448,7 @@ class LinearTransformationScene(VectorScene):
         return self
 
     def get_matrix_transformation(self, matrix):
+        '''获取矩阵变换'''
         return self.get_transposed_matrix_transformation(np.array(matrix).T)
 
     def get_transposed_matrix_transformation(self, transposed_matrix):

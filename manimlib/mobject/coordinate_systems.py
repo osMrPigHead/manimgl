@@ -24,7 +24,8 @@ class CoordinateSystem():
     """
     Axes 和 NumberPlane 的抽象基类
 
-    - ``x_range`` 和 ``y_range`` 控制坐标轴范围和分割精度，格式为 ``x_range=[x_min, x_max, dx]``
+    - ``x_range`` 和 ``y_range`` 控制坐标轴范围和分割精度
+      格式为 ``x_range=[x_min, x_max, dx]``
     - ``width`` 和 ``height`` 控制坐标轴的宽度和高度
     """
     CONFIG = {
@@ -322,7 +323,8 @@ class Axes(VGroup, CoordinateSystem):
                  y_range=None,
                  **kwargs):
         '''
-        - ``x_range`` 和 ``y_range`` 控制坐标轴范围和分割精度，格式为 ``x_range=[x_min, x_max, dx]``
+        - ``x_range`` 和 ``y_range`` 控制坐标轴范围和分割精度
+          格式为 ``x_range=[x_min, x_max, dx]``
         - ``width`` 和 ``height`` 控制坐标轴的宽度和高度
         '''
         CoordinateSystem.__init__(self, **kwargs)
@@ -404,7 +406,8 @@ class ThreeDAxes(Axes):
 
     def __init__(self, x_range=None, y_range=None, z_range=None, **kwargs):
         '''
-        - ``x_range``, ``y_range``, ``z_range`` 控制坐标轴范围和分割精度，格式为 ``x_range=[x_min, x_max, dx]``
+        - ``x_range``, ``y_range``, ``z_range`` 控制坐标轴范围和分割精度
+          格式为 ``x_range=[x_min, x_max, dx]``
         - ``width``, ``height``, ``depth`` 控制坐标轴的宽度、高度、深度
         '''
         Axes.__init__(self, x_range, y_range, **kwargs)
