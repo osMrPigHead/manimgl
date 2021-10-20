@@ -244,9 +244,13 @@ class TexturedSurface(Surface):
 
     def __init__(self, uv_surface, image_file, dark_image_file=None, **kwargs):
         '''
-        - ``uv_surface`` : 曲面
-        - ``image_file`` : 贴图
-        - ``dark_image_file`` : 可以看作是第二张贴图
+        - ``uv_surface`` : 曲面（类型必须为 ``Surface`` ）
+        - ``image_file`` : 物件受光面显示的贴图（路径）
+        - ``dark_image_file`` : 物件的背光面显示的贴图（路径）
+
+        关于受光面与背光面：
+
+        - 相机默认有一个光源，坐标位置在 ``[-10, 10, 10]``，光源能够直接照射到的部分贴图为受光面，不能直接照射到的为背光面
         '''
         if not isinstance(uv_surface, Surface):
             raise Exception("uv_surface must be of type Surface")

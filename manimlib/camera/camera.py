@@ -382,7 +382,15 @@ class Camera(object):
             return map(self.get_render_group, mobject.get_shader_wrapper_list())
 
     def get_render_group(self, shader_wrapper, single_use=True):
-        '''获取渲染'''
+        '''获取渲染所包含的成员
+
+        - ``vbo`` : vertex data buffer 
+        - ``ibo`` : vertex index data buffer
+        - ``vao`` : vertex array
+        - ``prog`` : shader program
+        - ``shader_wrapper`` : 材质包装
+        - ``single_use`` : 单次使用
+        '''
         # Data buffers
         vbo = self.ctx.buffer(shader_wrapper.vert_data.tobytes())
         if shader_wrapper.vert_indices is None:
