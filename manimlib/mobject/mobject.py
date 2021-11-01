@@ -1769,10 +1769,15 @@ class _AnimationBuilder:
     def __init__(self, mobject):
         '''用于场景类 ``Scene`` 的 ``play`` 中，用法如下：
 
-        ``self.play(mob.animate.shift(UP).scale(2).rotate(PI))``
+        .. code:: python
 
-        该示例中，会使 mob 生成一个 **向上移动 2 个单位，放大至 2 倍，旋转 180 度** 的目标，并使用类似 
-        ``MoveToTarget`` 的方法将它变为目标的样式
+            self.play(mob.animate.shift(UP).scale(2).rotate(PI))
+
+        该示例中，会使 mob 生成一个 **向上移动 2 个单位，放大至 2 倍，旋转 180 度** 的目标，并使用 
+        ``MoveToTarget`` 进行转变
+
+        这个方法可以采用 **链式操作**，即像样例中给的那样连续施加 3 个方法。这得益于 Mobject 的这些方法都返回自身，
+        也就是 ``return self``，有兴趣的读者可以仔细研究一下源码
         '''
         self.mobject = mobject
         self.overridden_animation = None
@@ -1804,6 +1809,28 @@ class _AnimationBuilder:
         return update_target
 
     def build(self):
+        '''
+        在动画播放之前，:func:`~manimlib.animation.animation.prepare_animation` 
+        会先自动调用 ``build()`` 方法，将方法编译为 **动画实例**
+
+        将一系列在 ``.animate`` 之后的方法合并为一个 ``MoveToTarget``，并返回这个 
+        ``MoveToTraget`` 的动画实例。也就是说，可以用下面的代码来播放动画，也可以将动画转变为更新
+
+        .. code:: python
+
+            # 直接用 play 方法播放
+            self.play(mob.animate.shift(UP).scale(2).rotate(PI/2))
+            
+            # 播放动画
+            anim = mob.animate.shift(UP).scale(2).rotate(PI/2).build() # 此处有无 .build() 均可
+            self.play(anim)
+    
+            # 将动画实例用一个变量保存，并将动画转变为更新
+            anim = mob.animate.shift(UP).scale(2).rotate(PI/2).build()
+            turn_animation_into_updater(anim)
+            self.add(mob)
+            self.wait(2)
+        '''
         from manimlib.animation.transform import _MethodAnimation
 
         if self.overridden_animation:

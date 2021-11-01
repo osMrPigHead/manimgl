@@ -17,8 +17,8 @@ class ParametricCurve(VMobject):
         '''
         传入 ``function`` 函数，自变量为参数 ``t`` ，返回值为一个三维点坐标
     
-        - ``t_range=[t_mix, t_max, dt]`` : 参数范围
-        - ``discontinuities`` : 间断点列表
+        - ``t_range=[t_mix, t_max, dt]`` : 参数 ``t`` 的取值范围和步进
+        - ``discontinuities`` : 间断点列表（在这个列表中的值所对应的点将会是图像的间断点）
         '''
         digest_config(self, kwargs)
         if t_range is not None:
@@ -64,7 +64,7 @@ class FunctionGraph(ParametricCurve):
         '''
         传入 ``function`` 函数，自变量为 x ，返回值为 y
     
-        - ``x_range=[x_mix, x_max, dx]`` 为自变量 x 的范围
+        - ``x_range=[x_mix, x_max, dx]`` 为自变量 x 的取值范围和步进
         '''
         digest_config(self, kwargs)
         self.function = function

@@ -71,7 +71,7 @@ class AnimationGroup(Animation):
 
     def build_animations_with_timings(self):
         """
-        创建表单的三元组列表 (anim, start_time, end_time)
+        创建三元组列表 (anim, start_time, end_time)
         """
         self.anims_with_timings = []
         curr_time = 0

@@ -85,6 +85,10 @@ class Animation(object):
 
     def update_mobjects(self, dt):
         """
+        更新 starting_mobject，以及 Transform 中的 target_mobject 的状态
+
+        注意：通常情况下，处在动画进程中的 self.mobject 会停止更新（只处理动画），所以这个方法对它是没有用的
+
         Updates things like starting_mobject, and (for
         Transforms) target_mobject.  Note, since typically
         (always?) self.mobject will have its updating

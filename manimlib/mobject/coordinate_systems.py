@@ -128,7 +128,9 @@ class CoordinateSystem():
 
     # Useful for graphing
     def get_graph(self, function, x_range=None, **kwargs):
-        '''绘制函数图像，并且自动移动到坐标轴的相对位置，使用 ``ParametricCurve``'''
+        '''绘制函数图像，并且自动移动到坐标轴的相对位置，使用 ``ParametricCurve``
+
+        - ``x_range=[x_min, x_max, dx]`` : 图像定义域'''
         t_range = np.array(self.x_range, dtype=float)
         if x_range is not None:
             t_range[:len(x_range)] = x_range
@@ -159,7 +161,7 @@ class CoordinateSystem():
 
     def input_to_graph_point(self, x, graph):
         """
-        传入一个 x，返回图像上以该 x 为横坐标的点的绝对坐标
+        传入一个 x 和一条参数曲线，返回图像上以该 x 为横坐标的点的绝对坐标
         """
         if hasattr(graph, "underlying_function"):
             return self.coords_to_point(x, graph.underlying_function(x))
@@ -253,7 +255,7 @@ class CoordinateSystem():
                                colors=(BLUE, GREEN),
                                show_signed_area=True):
         '''
-        绘制矩形填充图像下方的区域
+        绘制一系列矩形填充图像下方的区域
 
         - ``x_range = [x_min, x_max, dx]`` 可以指定范围，其中 ``dx`` 为分割精度
         - ``input_sample_type`` 指定矩形的左上角、上边缘中心、右上角抵在图像上
@@ -298,13 +300,16 @@ class CoordinateSystem():
 
 class Axes(VGroup, CoordinateSystem):
     '''
-    xOy 二维坐标系，由两条 ``NumberLine`` 组成，因此可以在一些参数中使用 ``NumberLine`` 的参数列表
+    xOy 二维坐标系，由两条 ``NumberLine`` 组成
 
-    - ``x_axis_config`` 中放入 x 轴的参数，格式为一个字典
+    - ``x_axis_config`` 中放入 x 轴的参数，注意每一个坐标轴都是一个 ``NumberLine``，所以其中的参数列表详见 :class:`~manimlib.mobject.number_line.NumberLine`
     - ``y_axis_config`` 中放入 y 轴的参数，同上
     - ``axis_config``
         - ``include_tip`` 是否包含箭头
         - ``numbers_to_exclude`` 在给坐标轴标上数字时，在这个列表中的数字会被排除
+
+    另外，给坐标轴设置颜色最好使用 ``set_color`` 方法，因为 ``color`` 参数需要在 
+    ``x_axis_config`` 和 ``y_axis_config`` 中给出才有效
     '''
     CONFIG = {
         "axis_config": {
@@ -358,7 +363,7 @@ class Axes(VGroup, CoordinateSystem):
         return axis
 
     def coords_to_point(self, *coords):
-        """输入坐标轴上的二维坐标，返回场景的绝对坐标，(x, y) -> array[x', y', 0]"""
+        """输入坐标轴上的二维坐标，返回场景的绝对坐标，(x, y) -> array([x', y', 0])"""
         origin = self.x_axis.number_to_point(0)
         result = origin.copy()
         for axis, coord in zip(self.get_axes(), coords):
@@ -366,7 +371,7 @@ class Axes(VGroup, CoordinateSystem):
         return result
 
     def point_to_coords(self, point):
-        """输入场景的绝对坐标，返回坐标轴上的二维坐标，array[x, y, 0] -> (x', y')"""
+        """输入场景的绝对坐标，返回坐标轴上的二维坐标，array([x, y, 0]) -> (x', y')"""
         return tuple([
             axis.point_to_number(point)
             for axis in self.get_axes()
@@ -528,12 +533,12 @@ class NumberPlane(Axes):
         return self.axes
 
     def get_vector(self, coords, **kwargs):
-        '''输入一个坐标轴的相对坐标，绘制一个【从原点到该点的向量】'''
+        '''输入一个二维坐标，绘制一个【从坐标轴原点到该点的向量】'''
         kwargs["buff"] = 0
         return Arrow(self.c2p(0, 0), self.c2p(*coords), **kwargs)
 
     def prepare_for_nonlinear_transform(self, num_inserted_curves=50):
-        '''将坐标系的每一条线进行分割，以适配即将应用的非线性变换'''
+        '''将坐标系的每一条线进行分割，以适配即将施加的非线性变换'''
         for mob in self.family_members_with_points():
             num_curves = mob.get_num_curves()
             if num_inserted_curves > num_curves:

@@ -24,7 +24,7 @@ class MotionMobject(Mobject):
 
     def __init__(self, mobject, **kwargs):
         '''
-        传入一个 ``mobject`` 将这个物件封装成可以移动的
+        传入一个 ``mobject`` 将这个物件封装成可以用鼠标拖动的
         '''
         super().__init__(**kwargs)
         assert(isinstance(mobject, Mobject))
@@ -47,7 +47,7 @@ class Button(Mobject):
         '''
         传入一个 ``mobject``，并注册一个 ``on_click`` 方法
 
-        ``on_click`` 方法的参数列表中包含一个 ``mobject``，该响应函数需要读者自行定义
+        ``on_click`` 方法的参数列表中包含一个 ``mobject``，该响应函数需要使用者自行定义
         '''
         super().__init__(**kwargs)
         assert(isinstance(mobject, Mobject))
@@ -79,6 +79,7 @@ class ControlMobject(ValueTracker):
         self.fix_in_frame()
 
     def set_value(self, value):
+        '''设置变量控制器的值'''
         self.assert_value(value)
         self.set_value_anim(value)
         return ValueTracker.set_value(self, value)
@@ -394,7 +395,7 @@ class ColorSliders(Group):
         return rgb_to_hex(rgba[:3])
 
     def get_picked_opacity(self):
-        ''''获取当前选色器颜色透明度'''
+        '''获取当前选色器颜色透明度'''
         rgba = self.get_value()
         return rgba[3]
 

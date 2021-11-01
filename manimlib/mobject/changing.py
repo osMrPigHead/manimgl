@@ -99,7 +99,7 @@ class TracedPath(VMobject):
 
     def __init__(self, traced_point_func, **kwargs):
         '''
-        传入一个可调用的对象 ``traced_point_func`` (一般为 ``mob.get_center()`` )
+        传入一个可调用的对象 ``traced_point_func`` (一般为 ``mob.get_center`` )
 
         - ``min_distance_to_new_point`` : 两点之间的最小距离，若小于此距离则不增加点
         - ``time_traced`` : 追踪时间
@@ -155,6 +155,7 @@ class TracingTail(TracedPath):
     }
 
     def __init__(self, mobject_or_func, **kwargs):
+        """传入一个 ``Mobject`` 或者一个可调用的对象 ``func``（如 ``line.get_end``），追踪其运动轨迹"""
         if isinstance(mobject_or_func, Mobject):
             func = mobject_or_func.get_center
         else:

@@ -28,7 +28,7 @@ class Checkmark(TexText):
     }
 
     def __init__(self, **kwargs):
-        '''使用了 LaTex 的 ``\\ding\{51\}``'''
+        '''使用了 LaTex 的 ``\ding{51}``'''
         super().__init__("\\ding{51}")
 
 
@@ -39,7 +39,7 @@ class Exmark(TexText):
     }
 
     def __init__(self, **kwargs):
-        '''使用了 LaTex 的 ``\\ding\{55\}``'''
+        '''使用了 LaTex 的 ``\ding{55}``'''
         super().__init__("\\ding{55}")
 
 

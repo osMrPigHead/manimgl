@@ -161,7 +161,7 @@ class BraceLabel(VMobject):
 
 
 class BraceText(BraceLabel):
-    """带有 ``TexText``作为 label 的大括号"""
+    """带有 ``TexText`` 作为 label 的大括号"""
     CONFIG = {
         "label_constructor": TexText
     }

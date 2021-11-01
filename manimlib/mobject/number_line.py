@@ -44,6 +44,9 @@ class NumberLine(Line):
         '''
         - ``x_range=[x_min, x_max, dx]`` : 范围和步进
         - ``include_numbers`` : 是否包含数字
+        - ``numbers_to_exclude`` : 数轴包含数字时，这个列表内的数字不会显示
+        - ``include_tip`` : 包含箭头
+        - ``tip_config`` : 箭头参数
         - ``include_ticks`` : 包含刻度
         - ``decimal_number_config`` : 数轴标数
             - ``num_decimal_places`` : 小数点位数
