@@ -67,6 +67,8 @@ class Scene(object):
         self.time = 0
         self.skip_time = 0
         self.original_skipping_status = self.skip_animations
+        if self.start_at_animation_number is not None:
+            self.skip_animations = True
 
         # Items associated with interaction
         self.mouse_point = Point()
@@ -143,7 +145,7 @@ class Scene(object):
         for term in ("play", "wait", "add", "remove", "clear", "save_state", "restore"):
             local_ns[term] = getattr(self, term)
         log.info("Tips: Now the embed iPython terminal is open. But you can't interact with"
-            " the window directly. To do so, you need to type `touch()` or `self.interact()`")
+                 " the window directly. To do so, you need to type `touch()` or `self.interact()`")
         shell(local_ns=local_ns, stack_depth=2)
         # End scene when exiting an embed.
         raise EndSceneEarlyException()
@@ -190,6 +192,13 @@ class Scene(object):
         return self.always_update_mobjects or any([
             len(mob.get_family_updaters()) > 0
             for mob in self.mobjects
+        ])
+
+    def has_time_based_updaters(self):
+        return any([
+            sm.has_time_based_updater()
+            for mob in self.mobjects()
+            for sm in mob.get_family()
         ])
 
     # Related to time
@@ -283,30 +292,36 @@ class Scene(object):
     def update_skipping_status(self):
         if self.start_at_animation_number is not None:
             if self.num_plays == self.start_at_animation_number:
-                self.stop_skipping()
+                self.skip_time = self.time
+                if not self.original_skipping_status:
+                    self.stop_skipping()
         if self.end_at_animation_number is not None:
             if self.num_plays >= self.end_at_animation_number:
                 raise EndSceneEarlyException()
 
     def stop_skipping(self):
-        if self.skip_animations:
-            self.skip_animations = False
-            self.skip_time += self.time
+        self.virtual_animation_start_time = self.time
+        self.skip_animations = False
 
     # Methods associated with running animations
-    def get_time_progression(self, run_time, n_iterations=None, override_skip_animations=False):
+    def get_time_progression(self, run_time, n_iterations=None, desc="", override_skip_animations=False):
         if self.skip_animations and not override_skip_animations:
-            times = [run_time]
+            return [run_time]
         else:
             step = 1 / self.camera.frame_rate
             times = np.arange(0, run_time, step)
-        time_progression = ProgressDisplay(
+
+        if self.file_writer.has_progress_display:
+            self.file_writer.set_progress_display_subdescription(desc)
+            return times
+
+        return ProgressDisplay(
             times,
             total=n_iterations,
             leave=self.leave_progress_bars,
-            ascii=True if platform.system() == 'Windows' else None
+            ascii=True if platform.system() == 'Windows' else None,
+            desc=desc,
         )
-        return time_progression
 
     def get_run_time(self, animations):
         return np.max([animation.run_time for animation in animations])
@@ -314,30 +329,20 @@ class Scene(object):
     def get_animation_time_progression(self, animations):
         '''获取动画进度条，在此过程中播放动画'''
         run_time = self.get_run_time(animations)
-        time_progression = self.get_time_progression(run_time)
-        time_progression.set_description("".join([
-            f"Animation {self.num_plays}: {animations[0]}",
-            ", etc." if len(animations) > 1 else "",
-        ]))
+        description = f"{self.num_plays} {animations[0]}"
+        if len(animations) > 1:
+            description += ", etc."
+        time_progression = self.get_time_progression(run_time, desc=description)
         return time_progression
 
-    def get_wait_time_progression(self, duration, stop_condition):
+
+    def get_wait_time_progression(self, duration, stop_condition=None):
         '''获取等待进度条，在此过程中播放等待动画'''
+        kw = {"desc": f"{self.num_plays} Waiting"}
         if stop_condition is not None:
-            time_progression = self.get_time_progression(
-                duration,
-                n_iterations=-1,  # So it doesn't show % progress
-                override_skip_animations=True
-            )
-            time_progression.set_description(
-                "Waiting for {}".format(stop_condition.__name__)
-            )
-        else:
-            time_progression = self.get_time_progression(duration)
-            time_progression.set_description(
-                "Waiting {}".format(self.num_plays)
-            )
-        return time_progression
+            kw["n_iterations"] = -1  # So it doesn't show % progress
+            kw["override_skip_animations"] = True
+        return self.get_time_progression(duration, **kw)
 
     def anims_from_play_args(self, *args, **kwargs):
         """
@@ -496,27 +501,18 @@ class Scene(object):
     def wait(self, duration=DEFAULT_WAIT_TIME, stop_condition=None):
         '''等待一段时间'''
         self.update_mobjects(dt=0)  # Any problems with this?
-        if self.should_update_mobjects():
-            self.lock_static_mobject_data()
-            time_progression = self.get_wait_time_progression(duration, stop_condition)
-            last_t = 0
-            for t in time_progression:
-                dt = t - last_t
-                last_t = t
-                self.update_frame(dt)
-                self.emit_frame()
-                if stop_condition is not None and stop_condition():
-                    time_progression.close()
-                    break
-            self.unlock_mobject_data()
-        elif self.skip_animations:
-            # Do nothing
-            return self
-        else:
-            self.update_frame(duration)
-            n_frames = int(duration * self.camera.frame_rate)
-            for n in range(n_frames):
-                self.emit_frame()
+        self.lock_static_mobject_data()
+        time_progression = self.get_wait_time_progression(duration, stop_condition)
+        last_t = 0
+        for t in time_progression:
+            dt = t - last_t
+            last_t = t
+            self.update_frame(dt)
+            self.emit_frame()
+            if stop_condition is not None and stop_condition():
+                time_progression.close()
+                break
+        self.unlock_mobject_data()
         return self
 
     def wait_until(self, stop_condition, max_time=60):

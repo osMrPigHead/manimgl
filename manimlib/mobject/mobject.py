@@ -41,10 +41,13 @@ class Mobject(object):
         "opacity": 1,
         "dim": 3,  # TODO, get rid of this
         # Lighting parameters
-        # Positive gloss up to 1 makes it reflect the light.
-        "gloss": 0.0,
-        # Positive shadow up to 1 makes a side opposite the light darker
+        # ...
+        # Larger reflectiveness makes things brighter when facing the light
+        "reflectiveness": 0.0,
+        # Larger shadow makes faces opposite the light darker
         "shadow": 0.0,
+        # Makes parts bright where light gets reflected toward the camera
+        "gloss": 0.0,
         # For shaders
         "shader_folder": "",
         "render_primitive": moderngl.TRIANGLE_STRIP,
@@ -80,6 +83,14 @@ class Mobject(object):
     def __str__(self):
         return self.__class__.__name__
 
+    def __add__(self, other: 'Mobject') -> 'Mobject':
+        assert(isinstance(other, Mobject))
+        return self.get_group_class()(self, other)
+
+    def __mul__(self, other: 'int') -> 'Mobject':
+        assert(isinstance(other, int))
+        return self.replicate(other)
+
     def init_data(self):
         self.data = {
             "points": np.zeros((0, 3)),
@@ -92,6 +103,7 @@ class Mobject(object):
             "is_fixed_in_frame": float(self.is_fixed_in_frame),
             "gloss": self.gloss,
             "shadow": self.shadow,
+            "reflectiveness": self.reflectiveness,
         }
 
     def init_colors(self):
@@ -149,6 +161,7 @@ class Mobject(object):
         for mob in self.get_family():
             for key in mob.data:
                 mob.data[key] = mob.data[key][::-1]
+        self.refresh_unit_normal()
         return self
 
     def apply_points_function(self, func, about_point=None, about_edge=ORIGIN, works_on_bounding_box=False):
@@ -322,6 +335,11 @@ class Mobject(object):
         self.assemble_family()
         return self
 
+    def insert_submobject(self, index, new_submob):
+        self.submobjects.insert(index, new_submob)
+        self.assemble_family()
+        return self
+
     def set_submobjects(self, submobject_list):
         '''重新设置子物件'''
         self.remove(*self.submobjects)
@@ -415,6 +433,7 @@ class Mobject(object):
             self.submobjects.sort(key=submob_func)
         else:
             self.submobjects.sort(key=lambda m: point_to_num_func(m.get_center()))
+        self.assemble_family()
         return self
 
     def shuffle(self, recurse=False):
@@ -423,6 +442,7 @@ class Mobject(object):
             for submob in self.submobjects:
                 submob.shuffle(recurse=True)
         random.shuffle(self.submobjects)
+        self.assemble_family()
         return self
 
     # Copying
@@ -1041,14 +1061,14 @@ class Mobject(object):
         '''变暗'''
         self.set_opacity(1.0 - darkness, recurse=recurse)
 
-    def get_gloss(self):
-        '''获取光泽'''
-        return self.uniforms["gloss"]
+    def get_reflectiveness(self):
+        '''获取反光度'''
+        return self.uniforms["reflectiveness"]
 
-    def set_gloss(self, gloss, recurse=True):
-        '''设置光泽'''
+    def set_reflectiveness(self, reflectiveness, recurse=True):
+        '''设置反光度'''
         for mob in self.get_family(recurse):
-            mob.uniforms["gloss"] = gloss
+            mob.uniforms["reflectiveness"] = reflectiveness
         return self
 
     def get_shadow(self):
@@ -1059,6 +1079,14 @@ class Mobject(object):
         '''设置阴影'''
         for mob in self.get_family(recurse):
             mob.uniforms["shadow"] = shadow
+        return self
+
+    def get_gloss(self):
+        return self.uniforms["gloss"]
+
+    def set_gloss(self, gloss, recurse=True):
+        for mob in self.get_family(recurse):
+            mob.uniforms["gloss"] = gloss
         return self
 
     # Background rectangle
@@ -1466,12 +1494,14 @@ class Mobject(object):
     def fix_in_frame(self):
         '''将物件锁定在屏幕上，常用于 3D 场景需要旋转镜头的情况'''
         self.uniforms["is_fixed_in_frame"] = 1.0
+        self.is_fixed_in_frame = True
         return self
 
     @affects_shader_info_id
     def unfix_from_frame(self):
         '''将锁定在屏幕上的物件解锁'''
         self.uniforms["is_fixed_in_frame"] = 0.0
+        self.is_fixed_in_frame = False
         return self
 
     @affects_shader_info_id
@@ -1732,6 +1762,10 @@ class Group(Mobject):
             raise Exception("All submobjects must be of type Mobject")
         Mobject.__init__(self, **kwargs)
         self.add(*mobjects)
+
+    def __add__(self, other: 'Mobject' or 'Group'):
+        assert(isinstance(other, Mobject))
+        return self.add(other)
 
 
 class Point(Mobject):

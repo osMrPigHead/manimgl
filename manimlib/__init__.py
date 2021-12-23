@@ -22,6 +22,7 @@ from manimlib.camera.camera import *
 
 from manimlib.window import *
 
+from manimlib.mobject.boolean_ops import *
 from manimlib.mobject.coordinate_systems import *
 from manimlib.mobject.changing import *
 from manimlib.mobject.frame import *
@@ -36,6 +37,7 @@ from manimlib.mobject.probability import *
 from manimlib.mobject.shape_matchers import *
 from manimlib.mobject.svg.brace import *
 from manimlib.mobject.svg.drawings import *
+from manimlib.mobject.svg.mtex_mobject import *
 from manimlib.mobject.svg.svg_mobject import *
 from manimlib.mobject.svg.tex_mobject import *
 from manimlib.mobject.svg.text_mobject import *
