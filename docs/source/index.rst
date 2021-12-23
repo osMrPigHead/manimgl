@@ -6,7 +6,6 @@ ManimGL 教程文档
 这些文档基于 `3b1b/manim 存储库 <https://github.com/3b1b/manim>`_ 的 `master 分支 <https://github.com/3b1b/manim/>`_ 。
 是这个 `官方文档 <https://3b1b.github.io/manim/>`_ 的中文版本。
 
-<<<<<<< HEAD
 旧版 manim（即 cairo-backend ）的文档链接：`docs.manim.org.cn/cairo-backend <https://docs.manim.org.cn/cairo-backend>`__。
 
 社区版 manim 的文档链接：`docs.manim.community <https://docs.manim.community>`__。
@@ -14,9 +13,6 @@ ManimGL 教程文档
 .. admonition:: _(:з」∠)_
 
    不是翻译版本哦，是中文版。因为那个的作者也是我（没想到吧2333）
-=======
-And here is a Chinese version of this documentation: https://docs.manim.org.cn/
->>>>>>> 09ced7ce9ad2543098c1c6278fbe28accba5abef
 
 .. toctree::
    :maxdepth: 2

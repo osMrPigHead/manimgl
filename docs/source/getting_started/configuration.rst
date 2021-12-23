@@ -31,7 +31,6 @@
 所有支持的选项
 ^^^^^^^^^^^^^^^^^^^
 
-<<<<<<< HEAD
 ========================================================== ========== ==============================================================================
 选项                                                        简写       含义
 ========================================================== ========== ==============================================================================
@@ -54,6 +53,7 @@
 ``--config``                                                          进入自动配置指南
 ``--file_name FILE_NAME``                                             给输出文件重命名
 ``--start_at_animation_number START_AT_ANIMATION_NUMBER``  ``-n``     后面接两个数(逗号隔开)仅渲染一部分动画，如"3,6"
+``--embed LINENO``                                         ``-e``     传入一个行号，在行号位置处插入 ``self.embed()`` 后运行
 ``--resolution RESOLUTION``                                ``-r``     分辨率，传入格式为"WxH", 如"1920x1080"
 ``--frame_rate FRAME_RATE``                                           视频帧率（整数）
 ``--color COLOR``                                          ``-c``     背景颜色
@@ -64,39 +64,6 @@
 ========================================================== ========== ==============================================================================
 
 个性化默认值
-=======
-========================================================== ====== =================================================================================================================================================================================================
-flag                                                       abbr   function
-========================================================== ====== =================================================================================================================================================================================================
-``--help``                                                 ``-h`` Show the help message and exit
-``--write_file``                                           ``-w`` Render the scene as a movie file
-``--skip_animations``                                      ``-s`` Skip to the last frame
-``--low_quality``                                          ``-l`` Render at a low quality (for faster rendering)
-``--medium_quality``                                       ``-m`` Render at a medium quality
-``--hd``                                                          Render at a 1080p quality
-``--uhd``                                                         Render at a 4k quality
-``--full_screen``                                          ``-f`` Show window in full screen
-``--save_pngs``                                            ``-g`` Save each frame as a png
-``--save_as_gif``                                          ``-i`` Save the video as gif
-``--transparent``                                          ``-t`` Render to a movie file with an alpha channel
-``--quiet``                                                ``-q``
-``--write_all``                                            ``-a`` Write all the scenes from a file
-``--open``                                                 ``-o`` Automatically open the saved file once its done
-``--finder``                                                      Show the output file in finder
-``--config``                                                      Guide for automatic configuration
-``--file_name FILE_NAME``                                         Name for the movie or image file
-``--start_at_animation_number START_AT_ANIMATION_NUMBER``  ``-n`` Start rendering not from the first animation, but from another, specified by its index. If you passing two comma separated values, e.g. "3,6", it will end the rendering at the second value.
-``--embed LINENO``                                         ``-e`` Takes a line number as an argument, and results in the scene being called as if the line ``self.embed()`` was inserted into the scene code at that line number
-``--resolution RESOLUTION``                                ``-r`` Resolution, passed as "WxH", e.g. "1920x1080"
-``--frame_rate FRAME_RATE``                                       Frame rate, as an integer
-``--color COLOR``                                          ``-c`` Background color
-``--leave_progress_bars``                                         Leave progress bars displayed in terminal
-``--video_dir VIDEO_DIR``                                         directory to write video
-``--config_file CONFIG_FILE``                                     Path to the custom configuration file
-========================================================== ====== =================================================================================================================================================================================================
-
-custom_config
->>>>>>> 09ced7ce9ad2543098c1c6278fbe28accba5abef
 --------------
 
 为了进行更多配置（关于目录等）并且永久更改默认值（不必每次都在命令中添加 flags），
