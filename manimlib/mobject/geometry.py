@@ -326,6 +326,9 @@ class Circle(Arc):
             (angle - start_angle) / TAU
         )
 
+    def get_radius(self):
+        return get_norm(self.get_start() - self.get_center())
+
 
 class Dot(Circle):
     """点（半径默认为0.08）"""
@@ -577,6 +580,7 @@ class Line(TipableVMobject):
     def set_length(self, length, **kwargs):
         """缩放到 ``length`` 长度"""
         self.scale(length / self.get_length(), **kwargs)
+        return self
 
 
 class DashedLine(Line):

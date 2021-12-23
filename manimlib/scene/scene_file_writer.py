@@ -5,6 +5,7 @@ import subprocess as sp
 import os
 import sys
 import platform
+from tqdm import tqdm as ProgressDisplay
 
 from manimlib.constants import FFMPEG_BIN
 from manimlib.utils.config_ops import digest_config
@@ -36,12 +37,15 @@ class SceneFileWriter(object):
         "open_file_upon_completion": False,
         "show_file_location_upon_completion": False,
         "quiet": False,
+        "total_frames": 0,
+        "progress_description_len": 60,
     }
 
     def __init__(self, scene, **kwargs):
         digest_config(self, kwargs)
         self.scene = scene
         self.writing_process = None
+        self.has_progress_display = False
         self.init_output_directories()
         self.init_audio()
 
@@ -73,10 +77,14 @@ class SceneFileWriter(object):
         return path
 
     def get_default_scene_name(self):
-        if self.file_name is None:
-            return self.scene.__class__.__name__
-        else:
-            return self.file_name
+        name = str(self.scene)
+        saan = self.scene.start_at_animation_number
+        eaan = self.scene.end_at_animation_number
+        if saan is not None:
+            name += f"_{saan}"
+        if eaan is not None:
+            name += f"_{eaan}"
+        return name
 
     def get_resolution_directory(self):
         pixel_height = self.scene.camera.pixel_height
@@ -208,17 +216,41 @@ class SceneFileWriter(object):
         command += [self.temp_file_path]
         self.writing_process = sp.Popen(command, stdin=sp.PIPE)
 
+        if self.total_frames > 0:
+            self.progress_display = ProgressDisplay(
+                range(self.total_frames),
+                # bar_format="{l_bar}{bar}|{n_fmt}/{total_fmt}",
+                leave=False,
+                ascii=True if platform.system() == 'Windows' else None,
+                dynamic_ncols=True,
+            )
+            self.has_progress_display = True
+
+    def set_progress_display_subdescription(self, sub_desc):
+        desc_len = self.progress_description_len
+        file = os.path.split(self.get_movie_file_path())[1]
+        full_desc = f"Rendering {file} ({sub_desc})"
+        if len(full_desc) > desc_len:
+            full_desc = full_desc[:desc_len - 4] + "...)"
+        else:
+            full_desc += " " * (desc_len - len(full_desc))
+        self.progress_display.set_description(full_desc)
+
     def write_frame(self, camera):
         '''写入视频帧'''
         if self.write_to_movie:
             raw_bytes = camera.get_raw_fbo_data()
             self.writing_process.stdin.write(raw_bytes)
+            if self.has_progress_display:
+                self.progress_display.update()
 
     def close_movie_pipe(self):
         '''关闭视频管道'''
         self.writing_process.stdin.close()
         self.writing_process.wait()
         self.writing_process.terminate()
+        if self.has_progress_display:
+            self.progress_display.close()
         shutil.move(self.temp_file_path, self.final_file_path)
 
     def combine_movie_files(self):
@@ -283,7 +315,7 @@ class SceneFileWriter(object):
         )
         temp_file_path = stem + "_temp" + ext
         commands = [
-            "ffmpeg",
+            FFMPEG_BIN,
             "-i", movie_file_path,
             "-i", sound_file_path,
             '-y',  # overwrite output file if it exists
@@ -309,7 +341,8 @@ class SceneFileWriter(object):
         self.print_file_ready_message(file_path)
 
     def print_file_ready_message(self, file_path):
-        print(f"\nFile ready at {file_path}\n")
+        if not self.quiet:
+            log.info(f"File ready at {file_path}")
 
     def should_open_file(self):
         return any([

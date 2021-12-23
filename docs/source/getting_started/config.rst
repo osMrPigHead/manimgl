@@ -75,4 +75,8 @@ CONFIG 字典支持嵌套，即键的值也为一个字典，例如
 为了更方便的控制， ``Scene`` 类中有一个特殊的键值对 ``"camera_config": {}`` ，
 它的值是一个字典，通过初始化 ``Camera`` 类的时候作为 ``kwargs`` 传入，修改 ``Camera`` 类的属性的值
 
+<<<<<<< HEAD
 所以 CONFIG 字典的嵌套 **本质** 上是将值作为 ``kwargs`` 传入
+=======
+So the nesting of the ``CONFIG`` dictionary **essentially** passes in the value as ``kwargs``.
+>>>>>>> 09ced7ce9ad2543098c1c6278fbe28accba5abef

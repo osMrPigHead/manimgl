@@ -56,6 +56,7 @@ class Lightbulb(SVGMobject):
     def __init__(self, **kwargs):
         '''暂无 SVG，如有需求可以去 Grant 那里取'''
         super().__init__("lightbulb", **kwargs)
+        self.insert_n_curves(25)
 
 
 class Speedometer(VMobject):
@@ -215,13 +216,13 @@ class Laptop(VGroup):
 class VideoIcon(SVGMobject):
     '''视频播放按钮'''
     CONFIG = {
-        "file_name": "video_icon",
         "width": FRAME_WIDTH / 12.,
     }
 
     def __init__(self, **kwargs):
         '''暂无 SVG'''
         SVGMobject.__init__(self, **kwargs)
+        super().__init__(file_name="video_icon", **kwargs)
         self.center()
         self.set_width(self.width)
         self.set_stroke(color=WHITE, width=0)

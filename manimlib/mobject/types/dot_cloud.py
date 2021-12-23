@@ -2,12 +2,14 @@ import numpy as np
 import moderngl
 
 from manimlib.constants import GREY_C
+from manimlib.constants import YELLOW
 from manimlib.constants import ORIGIN
 from manimlib.mobject.types.point_cloud_mobject import PMobject
 from manimlib.utils.iterables import resize_preserving_order
 
 
 DEFAULT_DOT_RADIUS = 0.05
+DEFAULT_GLOW_DOT_RADIUS = 0.2
 DEFAULT_GRID_HEIGHT = 6
 DEFAULT_BUFF_RATIO = 0.5
 
@@ -18,6 +20,7 @@ class DotCloud(PMobject):
         "color": GREY_C,
         "opacity": 1,
         "radius": DEFAULT_DOT_RADIUS,
+        "glow_factor": 0,
         "shader_folder": "true_dot",
         "render_primitive": moderngl.POINTS,
         "shader_dtype": [
@@ -37,6 +40,10 @@ class DotCloud(PMobject):
         super().init_data()
         self.data["radii"] = np.zeros((1, 1))
         self.set_radius(self.radius)
+
+    def init_uniforms(self):
+        super().init_uniforms()
+        self.uniforms["glow_factor"] = self.glow_factor
 
     def to_grid(self, n_rows, n_cols, n_layers=1,
                 buff_ratio=None,
@@ -92,6 +99,12 @@ class DotCloud(PMobject):
         '''获取点半径的最大值'''
         return self.get_radii().max()
 
+    def set_glow_factor(self, glow_factor):
+        self.uniforms["glow_factor"] = glow_factor
+
+    def get_glow_factor(self):
+        return self.uniforms["glow_factor"]
+
     def compute_bounding_box(self):
         bb = super().compute_bounding_box()
         radius = self.get_radius()
@@ -106,9 +119,10 @@ class DotCloud(PMobject):
             self.set_radii(scale_factor * self.get_radii())
         return self
 
-    def make_3d(self, gloss=0.5, shadow=0.2):
+
+    def make_3d(self, reflectiveness=0.5, shadow=0.2):
         '''给点集添加光泽'''
-        self.set_gloss(gloss)
+        self.set_reflectiveness(reflectiveness)
         self.set_shadow(shadow)
         self.apply_depth_test()
         return self
@@ -122,9 +136,17 @@ class DotCloud(PMobject):
 
 class TrueDot(DotCloud):
     '''一个单点'''
-    def __init__(self, center=ORIGIN, radius=DEFAULT_DOT_RADIUS, **kwargs):
+    def __init__(self, center=ORIGIN, **kwargs):
         '''
         - ``center`` : 点的中心
-        - ``radius`` : 点的半径
         '''
-        super().__init__(points=[center], radius=radius, **kwargs)
+        super().__init__(points=[center], **kwargs)
+
+
+class GlowDot(TrueDot):
+    '''带光泽的点，``glow_factor`` 表示光泽'''
+    CONFIG = {
+        "glow_factor": 2,
+        "radius": DEFAULT_GLOW_DOT_RADIUS,
+        "color": YELLOW,
+    }
