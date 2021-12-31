@@ -327,6 +327,7 @@ class Circle(Arc):
         )
 
     def get_radius(self):
+        """获取圆的半径"""
         return get_norm(self.get_start() - self.get_center())
 
 

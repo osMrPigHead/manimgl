@@ -45,6 +45,11 @@ def _convert_skia_path_to_vmobject(path, vmobject):
 
 
 class Union(VMobject):
+    """
+    并集
+
+    传入两个及以上 ``VMobject``，返回它们并集的外轮廓
+    """
     def __init__(self, *vmobjects, **kwargs):
         if len(vmobjects) < 2:
             raise ValueError("At least 2 mobjects needed for Union.")
@@ -56,9 +61,15 @@ class Union(VMobject):
         ]
         pathops.union(paths, outpen.getPen())
         _convert_skia_path_to_vmobject(outpen, self)
+        self.reverse_points()
 
 
 class Difference(VMobject):
+    """
+    差集
+
+    传入 submobject 和 clip，返回 submobject 裁去 clip 部分的轮廓线
+    """
     def __init__(self, subject, clip, **kwargs):
         super().__init__(**kwargs)
         outpen = pathops.Path()
@@ -68,9 +79,15 @@ class Difference(VMobject):
             outpen.getPen(),
         )
         _convert_skia_path_to_vmobject(outpen, self)
+        self.reverse_points()
 
 
 class Intersection(VMobject):
+    """
+    交集
+
+    传入两个及以上 ``VMobject``，返回它们交集的外轮廓
+    """
     def __init__(self, *vmobjects, **kwargs):
         if len(vmobjects) < 2:
             raise ValueError("At least 2 mobjects needed for Intersection.")
@@ -91,9 +108,15 @@ class Intersection(VMobject):
             )
             outpen = new_outpen
         _convert_skia_path_to_vmobject(outpen, self)
+        self.reverse_points()
 
 
 class Exclusion(VMobject):
+    """
+    补集
+
+    传入两个及以上 ``VMobject``，返回它们经过 ``XOR`` 运算后图形的的外轮廓
+    """
     def __init__(self, *vmobjects, **kwargs):
         if len(vmobjects) < 2:
             raise ValueError("At least 2 mobjects needed for Exclusion.")
@@ -114,3 +137,4 @@ class Exclusion(VMobject):
             )
             outpen = new_outpen
         _convert_skia_path_to_vmobject(outpen, self)
+        self.reverse_points()

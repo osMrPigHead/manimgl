@@ -258,6 +258,9 @@ class VCube(VGroup):
 
 
 class Dodecahedron(VGroup):
+    """
+    十二面体
+    """
     CONFIG = {
         "fill_color": BLUE_E,
         "fill_opacity": 1,

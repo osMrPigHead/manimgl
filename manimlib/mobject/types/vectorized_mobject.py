@@ -139,7 +139,7 @@ class VMobject(Mobject):
         return self
 
     def set_stroke(self, color=None, width=None, opacity=None, background=None, recurse=True):
-        '''设置轮廓线'''
+        '''设置轮廓线（轮廓线浮于填充色上方）'''
         self.set_rgba_array_by_color(color, opacity, 'stroke_rgba', recurse)
 
         if width is not None:
@@ -156,6 +156,7 @@ class VMobject(Mobject):
         return self
 
     def set_backstroke(self, color=BLACK, width=3, background=True):
+        """设置背景轮廓线（轮廓线衬于填充色下方）"""
         self.set_stroke(color, width, background=background)
         return self
 
@@ -602,7 +603,11 @@ class VMobject(Mobject):
         return self.get_num_points() // self.n_points_per_curve
 
     def quick_point_from_proportion(self, alpha):
-        """在整条路径上占比为 alpha 处的点"""
+        """
+        在整条路径上占比为 alpha 处的点
+
+        这个方法建立在假设所有弧线长度相同的条件下，因此可能有一些误差，但是性能更好
+        """
         # Assumes all curves have the same length, so is inaccurate
         num_curves = self.get_num_curves()
         n, residue = integer_interpolate(0, num_curves, alpha)
@@ -610,6 +615,9 @@ class VMobject(Mobject):
         return curve_func(residue)
 
     def point_from_proportion(self, alpha):
+        """
+        在整条路径上占比为 alpha 处的点
+        """
         if alpha <= 0:
             return self.get_start()
         elif alpha >= 1:
