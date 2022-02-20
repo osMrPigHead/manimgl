@@ -4,6 +4,7 @@ import random
 import sys
 import moderngl
 from functools import wraps
+from collections.abc import Iterable
 
 import numpy as np
 
@@ -630,7 +631,10 @@ class Mobject(object):
         """
         放大 (缩小) 到原来的 ``scale_factor`` 倍，可以传入 ``about_point/about_edge``
         """
-        scale_factor = max(scale_factor, min_scale_factor)
+        if isinstance(scale_factor, Iterable):
+            scale_factor = np.array(scale_factor).clip(min=min_scale_factor)
+        else:
+            scale_factor = max(scale_factor, min_scale_factor)
         self.apply_points_function(
             lambda points: scale_factor * points,
             about_point=about_point,
@@ -869,6 +873,21 @@ class Mobject(object):
         '''设置最大深度'''
         if self.get_depth() > max_depth:
             self.set_depth(max_depth, **kwargs)
+        return self
+
+    def set_min_width(self, min_width, **kwargs):
+        if self.get_width() < min_width:
+            self.set_width(min_width, **kwargs)
+        return self
+
+    def set_min_height(self, min_height, **kwargs):
+        if self.get_height() < min_height:
+            self.set_height(min_height, **kwargs)
+        return self
+
+    def set_min_depth(self, min_depth, **kwargs):
+        if self.get_depth() < min_depth:
+            self.set_depth(min_depth, **kwargs)
         return self
 
     def set_coord(self, value, dim, direction=ORIGIN):
@@ -1286,24 +1305,24 @@ class Mobject(object):
         '''将自己的深度与 ``mobject`` 匹配（这里的深度指 z 轴方向的宽度）'''
         return self.match_dim_size(mobject, 2, **kwargs)
 
-    def match_coord(self, mobject, dim, direction=ORIGIN):
-        return self.set_coord(
-            mobject.get_coord(dim, direction),
-            dim=dim,
-            direction=direction,
-        )
+    def match_coord(self, mobject_or_point, dim, direction=ORIGIN):
+        if isinstance(mobject_or_point, Mobject):
+            coord = mobject_or_point.get_coord(dim, direction)
+        else:
+            coord = mobject_or_point[dim]
+        return self.set_coord(coord, dim=dim, direction=direction)
 
-    def match_x(self, mobject, direction=ORIGIN):
+    def match_x(self, mobject_or_point, direction=ORIGIN):
         '''移动到 ``mobject`` 的 x 轴坐标'''
-        return self.match_coord(mobject, 0, direction)
+        return self.match_coord(mobject_or_point, 0, direction)
 
-    def match_y(self, mobject, direction=ORIGIN):
+    def match_y(self, mobject_or_point, direction=ORIGIN):
         '''移动到 ``mobject`` 的 y 轴坐标'''
-        return self.match_coord(mobject, 1, direction)
+        return self.match_coord(mobject_or_point, 1, direction)
 
-    def match_z(self, mobject, direction=ORIGIN):
+    def match_z(self, mobject_or_point, direction=ORIGIN):
         '''移动到 ``mobject`` 的 z 轴坐标'''
-        return self.match_coord(mobject, 2, direction)
+        return self.match_coord(mobject_or_point, 2, direction)
 
     def align_to(self, mobject_or_point, direction=ORIGIN):
         """

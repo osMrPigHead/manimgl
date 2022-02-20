@@ -23,7 +23,7 @@ def parse_cli():
         module_location.add_argument(
             "file",
             nargs="?",
-            help="path to file holding the python code for the scene",
+            help="Path to file holding the python code for the scene",
         )
         parser.add_argument(
             "scene_names",
@@ -64,6 +64,12 @@ def parse_cli():
             "-f", "--full_screen",
             action="store_true",
             help="Show window in full screen",
+        )
+        parser.add_argument(
+            "-p", "--presenter_mode",
+            action="store_true",
+            help="Scene will stay paused during wait calls until "
+                 "space bar or right arrow is hit, like a slide show"
         )
         parser.add_argument(
             "-g", "--save_pngs",
@@ -306,6 +312,7 @@ def get_configuration(args):
         "start_at_animation_number": args.start_at_animation_number,
         "end_at_animation_number": None,
         "preview": not write_file,
+        "presenter_mode": args.presenter_mode,
         "leave_progress_bars": args.leave_progress_bars,
     }
 
