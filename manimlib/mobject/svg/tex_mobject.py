@@ -5,7 +5,6 @@ import re
 from manimlib.constants import *
 from manimlib.mobject.geometry import Line
 from manimlib.mobject.svg.svg_mobject import SVGMobject
-from manimlib.mobject.types.vectorized_mobject import VMobject
 from manimlib.mobject.types.vectorized_mobject import VGroup
 from manimlib.utils.config_ops import digest_config
 from manimlib.utils.tex_file_writing import tex_to_svg_file
@@ -16,50 +15,52 @@ from manimlib.utils.tex_file_writing import display_during_execution
 SCALE_FACTOR_PER_FONT_POINT = 0.001
 
 
-tex_string_to_mob_map = {}
-
-
-class SingleStringTex(VMobject):
+class SingleStringTex(SVGMobject):
     """单个字符串渲染出的 SVGMobject"""
     CONFIG = {
+        "height": None,
         "fill_opacity": 1.0,
         "stroke_width": 0,
-        "should_center": True,
+        "svg_default": {
+            "color": WHITE,
+        },
+        "path_string_config": {
+            "should_subdivide_sharp_curves": True,
+            "should_remove_null_curves": True,
+        },
         "font_size": 48,
-        "height": None,
-        "organize_left_to_right": False,
         "alignment": "\\centering",
         "math_mode": True,
+        "organize_left_to_right": False,
     }
 
     def __init__(self, tex_string, **kwargs):
         """只传入一个字符串``tex_string``"""
-        super().__init__(**kwargs)
-        assert(isinstance(tex_string, str))
+        assert isinstance(tex_string, str)
         self.tex_string = tex_string
-        if tex_string not in tex_string_to_mob_map:
-            with display_during_execution(f" Writing \"{tex_string}\""):
-                full_tex = self.get_tex_file_body(tex_string)
-                filename = tex_to_svg_file(full_tex)
-                svg_mob = SVGMobject(
-                    filename,
-                    height=None,
-                    path_string_config={
-                        "should_subdivide_sharp_curves": True,
-                        "should_remove_null_curves": True,
-                    }
-                )
-                tex_string_to_mob_map[tex_string] = svg_mob
-        self.add(*(
-            sm.copy()
-            for sm in tex_string_to_mob_map[tex_string]
-        ))
-        self.init_colors()
+        super().__init__(**kwargs)
 
         if self.height is None:
             self.scale(SCALE_FACTOR_PER_FONT_POINT * self.font_size)
         if self.organize_left_to_right:
             self.organize_submobjects_left_to_right()
+
+    @property
+    def hash_seed(self):
+        return (
+            self.__class__.__name__,
+            self.svg_default,
+            self.path_string_config,
+            self.tex_string,
+            self.alignment,
+            self.math_mode
+        )
+
+    def get_file_path(self):
+        full_tex = self.get_tex_file_body(self.tex_string)
+        with display_during_execution(f"Writing \"{self.tex_string}\""):
+            file_path = tex_to_svg_file(full_tex)
+        return file_path
 
     def get_tex_file_body(self, tex_string):
         new_tex = self.get_modified_expression(tex_string)
@@ -134,7 +135,11 @@ class SingleStringTex(VMobject):
     def balance_braces(self, tex):
         """匹配大括号"""
         num_unclosed_brackets = 0
-        for char in tex:
+        for i in range(len(tex)):
+            if i > 0 and tex[i - 1] == "\\":
+                # So as to not count '\{' type expressions
+                continue
+            char = tex[i]
             if char == "{":
                 num_unclosed_brackets += 1
             elif char == "}":

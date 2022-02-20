@@ -1,3 +1,4 @@
+from abc import abstractmethod
 import numpy as np
 import numbers
 
@@ -61,9 +62,11 @@ class CoordinateSystem():
         '''获取坐标原点的绝对坐标'''
         return self.c2p(*[0] * self.dimension)
 
+    @abstractmethod
     def get_axes(self):
         raise Exception("Not implemented")
 
+    @abstractmethod
     def get_all_ranges(self):
         raise Exception("Not implemented")
 
@@ -313,7 +316,7 @@ class Axes(VGroup, CoordinateSystem):
     '''
     CONFIG = {
         "axis_config": {
-            "include_tip": True,
+            "include_tip": False,
             "numbers_to_exclude": [0],
         },
         "x_axis_config": {},
