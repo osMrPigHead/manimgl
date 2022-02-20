@@ -90,6 +90,7 @@ class Brace(SingleStringTex):
         return self.get_all_points()[self.tip_point_index]
 
     def get_direction(self):
+        """获取大括号的方向"""
         vect = self.get_tip() - self.get_center()
         return vect / get_norm(vect)
 

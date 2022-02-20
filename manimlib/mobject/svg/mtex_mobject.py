@@ -23,6 +23,7 @@ def _get_neighbouring_pairs(iterable):
 
 
 class _TexParser(object):
+    """Tex 解析器"""
     def __init__(self, tex_string, additional_substrings):
         self.tex_string = tex_string
         self.whitespace_indices = self.get_whitespace_indices()
@@ -398,6 +399,7 @@ class _TexSVG(SVGMobject):
 
 
 class MTex(_TexSVG):
+    """由凡人忆拾编写的 MTex 类"""
     CONFIG = {
         "color": WHITE,
         "font_size": 48,
@@ -560,10 +562,12 @@ class MTex(_TexSVG):
         return all_parts[index]
 
     def set_color_by_tex(self, tex, color):
+        """根据 tex 字符串设置颜色"""
         self.get_parts_by_tex(tex).set_color(color)
         return self
 
     def set_color_by_tex_to_color_map(self, tex_to_color_map):
+        """根据 ``{ tex: color }`` 字典设置颜色"""
         for tex, color in tex_to_color_map.items():
             self.set_color_by_tex(tex, color)
         return self
@@ -598,6 +602,7 @@ class MTex(_TexSVG):
 
 
 class MTexText(MTex):
+    """MTex 无公式环境的文本"""
     CONFIG = {
         "tex_environment": None,
     }

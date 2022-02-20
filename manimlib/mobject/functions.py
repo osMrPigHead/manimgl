@@ -91,6 +91,7 @@ class FunctionGraph(ParametricCurve):
 
 
 class ImplicitFunction(VMobject):
+    """隐函数"""
     CONFIG = {
         "x_range": [-FRAME_X_RADIUS, FRAME_X_RADIUS],
         "y_range": [-FRAME_Y_RADIUS, FRAME_Y_RADIUS],
