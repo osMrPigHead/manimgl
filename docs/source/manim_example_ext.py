@@ -87,7 +87,7 @@ TEMPLATE = r"""
 {% if is_video %}
 .. raw:: html
 
-    <video id="{{ scene_name_lowercase }}" class="manim-video" controls loop autoplay src="{{ media_file_name }}"></video>
+    <video id="{{ scene_name_lowercase }}" class="manim-video" controls src="{{ media_file_name }}"></video>
 {% else %}
 .. image:: {{ media_file_name }}
     :align: center

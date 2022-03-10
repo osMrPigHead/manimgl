@@ -147,7 +147,7 @@ class FadeTransformPieces(FadeTransform):
 
 class VFadeIn(Animation):
     """
-    VFadeIn and VFadeOut only work for VMobjects,
+    淡入
     """
     CONFIG = {
         "suspend_mobject_updating": False,
@@ -163,6 +163,9 @@ class VFadeIn(Animation):
 
 
 class VFadeOut(VFadeIn):
+    """
+    淡出
+    """
     CONFIG = {
         "remover": True,
         # Put it back in original state when done

@@ -343,7 +343,7 @@ class Camera(object):
         return self.get_pixel_shape()[0]
 
     def get_pixel_height(self):
-        '''获取画面像素g高度'''
+        '''获取画面像素高度'''
         return self.get_pixel_shape()[1]
 
     def get_frame_height(self):
