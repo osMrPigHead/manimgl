@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import Callable
+
 import numpy as np
 from pyglet.window import key as PygletWindowKeys
 
@@ -21,8 +25,7 @@ class MotionMobject(Mobject):
     """
     可以用鼠标拖拽移动的物件
     """
-
-    def __init__(self, mobject, **kwargs):
+    def __init__(self, mobject: Mobject, **kwargs):
         '''
         传入一个 ``mobject`` 将这个物件封装成可以用鼠标拖动的
         '''
@@ -34,7 +37,7 @@ class MotionMobject(Mobject):
         self.mobject.add_updater(lambda mob: None)
         self.add(mobject)
 
-    def mob_on_mouse_drag(self, mob, event_data):
+    def mob_on_mouse_drag(self, mob: Mobject, event_data: dict[str, np.ndarray]) -> bool:
         mob.move_to(event_data["point"])
         return False
 
@@ -43,7 +46,8 @@ class Button(Mobject):
     """
     按钮
     """
-    def __init__(self, mobject, on_click, **kwargs):
+
+    def __init__(self, mobject: Mobject, on_click: Callable[[Mobject]], **kwargs):
         '''
         传入一个 ``mobject``，并注册一个 ``on_click`` 方法
 
@@ -56,7 +60,7 @@ class Button(Mobject):
         self.mobject.add_mouse_press_listner(self.mob_on_mouse_press)
         self.add(self.mobject)
 
-    def mob_on_mouse_press(self, mob, event_data):
+    def mob_on_mouse_press(self, mob: Mobject, event_data) -> bool:
         self.on_click(mob)
         return False
 
@@ -67,7 +71,7 @@ class ControlMobject(ValueTracker):
     '''
     变量控制器（以下几个类的基类）
     '''
-    def __init__(self, value, *mobjects, **kwargs):
+    def __init__(self, value: float, *mobjects: Mobject, **kwargs):
         '''
         ``value`` 作为实例的成员变量，``mobjects`` 作为窗口中可以看到的物件
         '''
@@ -78,7 +82,7 @@ class ControlMobject(ValueTracker):
         self.add_updater(lambda mob: None)
         self.fix_in_frame()
 
-    def set_value(self, value):
+    def set_value(self, value: float):
         '''设置变量控制器的值'''
         self.assert_value(value)
         self.set_value_anim(value)
@@ -108,7 +112,7 @@ class EnableDisableButton(ControlMobject):
         "disable_color": RED
     }
 
-    def __init__(self, value=True, **kwargs):
+    def __init__(self, value: bool = True, **kwargs):
         '''
         传入一个 ``boolean`` 值，作为它的变量；以矩形为按钮
 
@@ -124,19 +128,19 @@ class EnableDisableButton(ControlMobject):
         super().__init__(value, self.box, **kwargs)
         self.add_mouse_press_listner(self.on_mouse_press)
 
-    def assert_value(self, value):
+    def assert_value(self, value: bool) -> None:
         assert(isinstance(value, bool))
 
-    def set_value_anim(self, value):
+    def set_value_anim(self, value: bool) -> None:
         if value:
             self.box.set_fill(self.enable_color)
         else:
             self.box.set_fill(self.disable_color)
 
-    def toggle_value(self):
+    def toggle_value(self) -> None:
         super().set_value(not self.get_value())
 
-    def on_mouse_press(self, mob, event_data):
+    def on_mouse_press(self, mob: Mobject, event_data) -> bool:
         mob.toggle_value()
         return False
 
@@ -164,11 +168,11 @@ class Checkbox(ControlMobject):
         "box_content_buff": SMALL_BUFF
     }
 
-    def __init__(self, value=True, **kwargs):
+    def __init__(self, value: bool = True, **kwargs):
         '''
         功能与 启用/禁用按钮 类似
 
-        - ``checkmark_kwargs`` : 控制✅外形的参数
+        - ``checkmark_kwargs`` : 控制✔️外形的参数
         - ``cross_kwargs`` : 控制❌外形的参数
         '''
         digest_config(self, kwargs)
@@ -177,25 +181,25 @@ class Checkbox(ControlMobject):
         super().__init__(value, self.box, self.box_content, **kwargs)
         self.add_mouse_press_listner(self.on_mouse_press)
 
-    def assert_value(self, value):
+    def assert_value(self, value: bool) -> None:
         assert(isinstance(value, bool))
 
-    def toggle_value(self):
+    def toggle_value(self) -> None:
         super().set_value(not self.get_value())
 
-    def set_value_anim(self, value):
+    def set_value_anim(self, value: bool) -> None:
         if value:
             self.box_content.become(self.get_checkmark())
         else:
             self.box_content.become(self.get_cross())
 
-    def on_mouse_press(self, mob, event_data):
+    def on_mouse_press(self, mob: Mobject, event_data) -> None:
         mob.toggle_value()
         return False
 
     # Helper methods
 
-    def get_checkmark(self):
+    def get_checkmark(self) -> VGroup:
         checkmark = VGroup(
             Line(UP / 2 + 2 * LEFT, DOWN + LEFT, **self.checkmark_kwargs),
             Line(DOWN + LEFT, UP + RIGHT, **self.checkmark_kwargs)
@@ -207,7 +211,7 @@ class Checkbox(ControlMobject):
         checkmark.move_to(self.box)
         return checkmark
 
-    def get_cross(self):
+    def get_cross(self) -> VGroup:
         cross = VGroup(
             Line(UP + LEFT, DOWN + RIGHT, **self.cross_kwargs),
             Line(UP + RIGHT, DOWN + LEFT, **self.cross_kwargs)
@@ -243,7 +247,7 @@ class LinearNumberSlider(ControlMobject):
         }
     }
 
-    def __init__(self, value=0, **kwargs):
+    def __init__(self, value: float = 0, **kwargs):
         '''
         传入一个初始值，其他在参数中给出
 
@@ -265,22 +269,22 @@ class LinearNumberSlider(ControlMobject):
 
         self.slider.add_mouse_drag_listner(self.slider_on_mouse_drag)
 
-        super().__init__(value, self.bar, self.slider, self.slider_axis, ** kwargs)
+        super().__init__(value, self.bar, self.slider, self.slider_axis, **kwargs)
 
-    def assert_value(self, value):
+    def assert_value(self, value: float) -> None:
         assert(self.min_value <= value <= self.max_value)
 
-    def set_value_anim(self, value):
+    def set_value_anim(self, value: float) -> None:
         prop = (value - self.min_value) / (self.max_value - self.min_value)
         self.slider.move_to(self.slider_axis.point_from_proportion(prop))
 
-    def slider_on_mouse_drag(self, mob, event_data):
+    def slider_on_mouse_drag(self, mob, event_data: dict[str, np.ndarray]) -> bool:
         self.set_value(self.get_value_from_point(event_data["point"]))
         return False
 
     # Helper Methods
 
-    def get_value_from_point(self, point):
+    def get_value_from_point(self, point: np.ndarray) -> float:
         start, end = self.slider_axis.get_start_and_end()
         point_on_line = get_closest_point_on_line(start, end, point)
         prop = get_norm(point_on_line - start) / get_norm(end - start)
@@ -352,7 +356,7 @@ class ColorSliders(Group):
 
         self.arrange(DOWN)
 
-    def get_background(self):
+    def get_background(self) -> VGroup:
         single_square_len = self.background_grid_kwargs["single_square_len"]
         colors = self.background_grid_kwargs["colors"]
         width = self.rect_kwargs["width"]
@@ -374,14 +378,14 @@ class ColorSliders(Group):
 
         return grid
 
-    def set_value(self, r, g, b, a):
+    def set_value(self, r: float, g: float, b: float, a: float):
         '''设置 RGBA 值'''
         self.r_slider.set_value(r)
         self.g_slider.set_value(g)
         self.b_slider.set_value(b)
         self.a_slider.set_value(a)
 
-    def get_value(self):
+    def get_value(self) -> np.ndarary:
         '''获取 RGBA 值'''
         r = self.r_slider.get_value() / 255
         g = self.g_slider.get_value() / 255
@@ -389,12 +393,12 @@ class ColorSliders(Group):
         alpha = self.a_slider.get_value()
         return color_to_rgba(rgb_to_color((r, g, b)), alpha=alpha)
 
-    def get_picked_color(self):
+    def get_picked_color(self) -> str:
         '''获取当前选色器颜色的 16 进制（不包含透明度）'''
         rgba = self.get_value()
         return rgb_to_hex(rgba[:3])
 
-    def get_picked_opacity(self):
+    def get_picked_opacity(self) -> float:
         '''获取当前选色器颜色透明度'''
         rgba = self.get_value()
         return rgba[3]
@@ -420,7 +424,7 @@ class Textbox(ControlMobject):
         "deactive_color": RED,
     }
 
-    def __init__(self, value="", **kwargs):
+    def __init__(self, value: str = "", **kwargs):
         '''
         - ``box_kwargs`` : 文本框外框参数
         - ``text_kwargs`` : 文本参数
@@ -436,10 +440,10 @@ class Textbox(ControlMobject):
         self.active_anim(self.isActive)
         self.add_key_press_listner(self.on_key_press)
 
-    def set_value_anim(self, value):
+    def set_value_anim(self, value: str) -> None:
         self.update_text(value)
 
-    def update_text(self, value):
+    def update_text(self, value: str) -> None:
         text = self.text
         self.remove(text)
         text.__init__(value, **self.text_kwargs)
@@ -451,18 +455,18 @@ class Textbox(ControlMobject):
         text.fix_in_frame()
         self.add(text)
 
-    def active_anim(self, isActive):
+    def active_anim(self, isActive: bool) -> None:
         if isActive:
             self.box.set_stroke(self.active_color)
         else:
             self.box.set_stroke(self.deactive_color)
 
-    def box_on_mouse_press(self, mob, event_data):
+    def box_on_mouse_press(self, mob, event_data) -> bool:
         self.isActive = not self.isActive
         self.active_anim(self.isActive)
         return False
 
-    def on_key_press(self, mob, event_data):
+    def on_key_press(self, mob: Mobject, event_data: dict[str, int]) -> bool | None:
         '''键盘按下响应'''
         symbol = event_data["symbol"]
         modifiers = event_data["modifiers"]
@@ -507,7 +511,7 @@ class ControlPanel(Group):
         }
     }
 
-    def __init__(self, *controls, **kwargs):
+    def __init__(self, *controls: ControlMobject, **kwargs):
         '''
         传入一些变量控制器，将它们放在控制面板上
         
@@ -555,7 +559,7 @@ class ControlPanel(Group):
         self.move_panel_and_controls_to_panel_opener()
         self.fix_in_frame()
 
-    def move_panel_and_controls_to_panel_opener(self):
+    def move_panel_and_controls_to_panel_opener(self) -> None:
         self.panel.next_to(
             self.panel_opener_rect,
             direction=UP,
@@ -571,12 +575,12 @@ class ControlPanel(Group):
 
         self.controls.set_x(controls_old_x)
 
-    def add_controls(self, *new_controls):
+    def add_controls(self, *new_controls: ControlMobject) -> None:
         '''添加新控制器'''
         self.controls.add(*new_controls)
         self.move_panel_and_controls_to_panel_opener()
 
-    def remove_controls(self, *controls_to_remove):
+    def remove_controls(self, *controls_to_remove: ControlMobject) -> None:
         '''移除控制器'''
         self.controls.remove(*controls_to_remove)
         self.move_panel_and_controls_to_panel_opener()
@@ -597,13 +601,13 @@ class ControlPanel(Group):
         self.move_panel_and_controls_to_panel_opener()
         return self
 
-    def panel_opener_on_mouse_drag(self, mob, event_data):
+    def panel_opener_on_mouse_drag(self, mob, event_data: dict[str, np.ndarray]) -> bool:
         point = event_data["point"]
         self.panel_opener.match_y(Dot(point))
         self.move_panel_and_controls_to_panel_opener()
         return False
 
-    def panel_on_mouse_scroll(self, mob, event_data):
+    def panel_on_mouse_scroll(self, mob, event_data: dict[str, np.ndarray]) -> bool:
         offset = event_data["offset"]
         factor = 10 * offset[1]
         self.controls.set_y(self.controls.get_y() + factor)

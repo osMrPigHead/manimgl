@@ -1,3 +1,10 @@
+from __future__ import annotations
+
+from typing import Callable, Sequence, Union
+
+import colour
+import numpy.typing as npt
+
 from manimlib.constants import *
 from manimlib.mobject.mobject import Mobject
 from manimlib.utils.color import color_gradient
@@ -6,29 +13,42 @@ from manimlib.utils.iterables import resize_with_interpolation
 from manimlib.utils.iterables import resize_array
 
 
+ManimColor = Union[str, colour.Color, Sequence[float]]
+
+
 class PMobject(Mobject):
     '''点物件'''
     CONFIG = {
         "opacity": 1.0,
     }
 
-    def resize_points(self, size, resize_func=resize_array):
+    def resize_points(
+        self,
+        size: int,
+        resize_func: Callable[[np.ndarray, int], np.ndarray] = resize_array
+    ):
         # TODO
         for key in self.data:
             if key == "bounding_box":
                 continue
             if len(self.data[key]) != size:
-                self.data[key] = resize_array(self.data[key], size)
+                self.data[key] = resize_func(self.data[key], size)
         return self
 
-    def set_points(self, points):
+    def set_points(self, points: npt.ArrayLike):
         if len(points) == 0:
             points = np.zeros((0, 3))
         super().set_points(points)
         self.resize_points(len(points))
         return self
 
-    def add_points(self, points, rgbas=None, color=None, opacity=None):
+    def add_points(
+        self,
+        points: npt.ArrayLike,
+        rgbas: np.ndarray | None = None,
+        color: ManimColor | None = None,
+        opacity: float | None = None
+    ):
         """
         添加点，点必须是若干个三维坐标，即 Nx3 的数组
         """
@@ -51,20 +71,20 @@ class PMobject(Mobject):
         self.add_points([point], rgbas, color, opacity)
         return self
 
-    def set_color_by_gradient(self, *colors):
+    def set_color_by_gradient(self, *colors: ManimColor):
         self.data["rgbas"] = np.array(list(map(
             color_to_rgba,
             color_gradient(colors, self.get_num_points())
         )))
         return self
 
-    def match_colors(self, pmobject):
+    def match_colors(self, pmobject: PMobject):
         self.data["rgbas"][:] = resize_with_interpolation(
             pmobject.data["rgbas"], self.get_num_points()
         )
         return self
 
-    def filter_out(self, condition):
+    def filter_out(self, condition: Callable[[np.ndarray], bool]):
         for mob in self.family_members_with_points():
             to_keep = ~np.apply_along_axis(condition, 1, mob.get_points())
             for key in mob.data:
@@ -73,7 +93,7 @@ class PMobject(Mobject):
                 mob.data[key] = mob.data[key][to_keep]
         return self
 
-    def sort_points(self, function=lambda p: p[0]):
+    def sort_points(self, function: Callable[[np.ndarray]] = lambda p: p[0]):
         """
         按照传入的函数对点进行排序，函数接受一个 **三维** 坐标，返回一个数值
         """
@@ -93,12 +113,12 @@ class PMobject(Mobject):
             ])
         return self
 
-    def point_from_proportion(self, alpha):
+    def point_from_proportion(self, alpha: float) -> np.ndarray:
         '''获取点集上百分比为 alpha 的最接近的点'''
         index = alpha * (self.get_num_points() - 1)
         return self.get_points()[int(index)]
 
-    def pointwise_become_partial(self, pmobject, a, b):
+    def pointwise_become_partial(self, pmobject: PMobject, a: float, b: float):
         '''获取点集上百分比从 a 到 b 的点'''
         lower_index = int(a * pmobject.get_num_points())
         upper_index = int(b * pmobject.get_num_points())
@@ -111,7 +131,7 @@ class PMobject(Mobject):
 
 class PGroup(PMobject):
     '''点集组合'''
-    def __init__(self, *pmobs, **kwargs):
+    def __init__(self, *pmobs: PMobject, **kwargs):
         if not all([isinstance(m, PMobject) for m in pmobs]):
             raise Exception("All submobjects must be of type PMobject")
         super().__init__(*pmobs, **kwargs)
@@ -123,6 +143,6 @@ class Point(PMobject):
         "color": BLACK,
     }
 
-    def __init__(self, location=ORIGIN, **kwargs):
+    def __init__(self, location: np.ndarray = ORIGIN, **kwargs):
         super().__init__(**kwargs)
         self.add_points([location])

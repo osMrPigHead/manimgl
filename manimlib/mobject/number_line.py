@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import Iterable, Sequence
+
 from manimlib.constants import *
 from manimlib.mobject.geometry import Line
 from manimlib.mobject.numbers import DecimalNumber
@@ -40,7 +44,7 @@ class NumberLine(Line):
         "numbers_to_exclude": None
     }
 
-    def __init__(self, x_range=None, **kwargs):
+    def __init__(self, x_range: Sequence[float] | None = None, **kwargs):
         '''
         - ``x_range=[x_min, x_max, dx]`` : 范围和步进
         - ``include_numbers`` : 是否包含数字
@@ -61,9 +65,9 @@ class NumberLine(Line):
         x_min, x_max, x_step = x_range
         # A lot of old scenes pass in x_min or x_max explicitly,
         # so this is just here to keep those workin
-        self.x_min = kwargs.get("x_min", x_min)
-        self.x_max = kwargs.get("x_max", x_max)
-        self.x_step = kwargs.get("x_step", x_step)
+        self.x_min: float = kwargs.get("x_min", x_min)
+        self.x_max: float = kwargs.get("x_max", x_max)
+        self.x_step: float = kwargs.get("x_step", x_step)
 
         super().__init__(self.x_min * RIGHT, self.x_max * RIGHT, **kwargs)
         if self.width:
@@ -84,14 +88,14 @@ class NumberLine(Line):
         if self.include_numbers:
             self.add_numbers(excluding=self.numbers_to_exclude)
 
-    def get_tick_range(self):
+    def get_tick_range(self) -> np.ndarray:
         if self.include_tip:
             x_max = self.x_max
         else:
             x_max = self.x_max + self.x_step
         return np.arange(self.x_min, x_max, self.x_step)
 
-    def add_ticks(self):
+    def add_ticks(self) -> None:
         ticks = VGroup()
         for x in self.get_tick_range():
             size = self.tick_size
@@ -101,7 +105,7 @@ class NumberLine(Line):
         self.add(ticks)
         self.ticks = ticks
 
-    def get_tick(self, x, size=None):
+    def get_tick(self, x: float, size: float | None = None) -> Line:
         if size is None:
             size = self.tick_size
         result = Line(size * DOWN, size * UP)
@@ -110,15 +114,15 @@ class NumberLine(Line):
         result.match_style(self)
         return result
 
-    def get_tick_marks(self):
+    def get_tick_marks(self) -> VGroup:
         return self.ticks
 
-    def number_to_point(self, number):
+    def number_to_point(self, number: float | np.ndarray) -> np.ndarray:
         '''输入一个数轴上的数，返回它的绝对坐标，number -> array[x, y, 0]'''
-        alpha = float(number - self.x_min) / (self.x_max - self.x_min)
+        alpha = (number - self.x_min) / (self.x_max - self.x_min)
         return interpolate(self.get_start(), self.get_end(), alpha)
 
-    def point_to_number(self, point):
+    def point_to_number(self, point: np.ndarray) -> float:
         '''输入一个绝对坐标，返回这个坐标在数轴上标的数，array[x, y, 0] -> number'''
         points = self.get_points()
         start = points[0]
@@ -130,22 +134,25 @@ class NumberLine(Line):
         )
         return interpolate(self.x_min, self.x_max, proportion)
 
-    def n2p(self, number):
+    def n2p(self, number: float) -> np.ndarray:
         """number_to_point 的简写"""
         return self.number_to_point(number)
 
-    def p2n(self, point):
+    def p2n(self, point: np.ndarray) -> float:
         """point_to_number 的简写"""
         return self.point_to_number(point)
 
-    def get_unit_size(self):
+    def get_unit_size(self) -> float:
         '''获取单位长度'''
         return self.get_length() / (self.x_max - self.x_min)
 
-    def get_number_mobject(self, x,
-                           direction=None,
-                           buff=None,
-                           **number_config):
+    def get_number_mobject(
+        self,
+        x: float,
+        direction: np.ndarray | None = None,
+        buff: float | None = None,
+        **number_config
+    ) -> DecimalNumber:
         number_config = merge_dicts_recursively(
             self.decimal_number_config, number_config
         )
@@ -165,8 +172,14 @@ class NumberLine(Line):
             num_mob.shift(num_mob[0].get_width() * LEFT / 2)
         return num_mob
 
-    def add_numbers(self, x_values=None, excluding=None, font_size=24, **kwargs):
-        '''给数轴标数'''
+    def add_numbers(
+        self,
+        x_values: Iterable[float] | None = None,
+        excluding: Iterable[float] | None = None,
+        font_size: int = 24,
+        **kwargs
+    ) -> VGroup:
+        '''给数轴标上数字'''
         if x_values is None:
             x_values = self.get_tick_range()
 

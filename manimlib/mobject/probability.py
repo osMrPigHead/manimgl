@@ -1,3 +1,8 @@
+from __future__ import annotations
+
+from typing import Iterable, Union, Sequence
+import colour
+
 from manimlib.constants import *
 from manimlib.mobject.geometry import Line
 from manimlib.mobject.geometry import Rectangle
@@ -8,6 +13,8 @@ from manimlib.mobject.svg.tex_mobject import TexText
 from manimlib.mobject.types.vectorized_mobject import VGroup
 from manimlib.utils.color import color_gradient
 from manimlib.utils.iterables import listify
+
+ManimColor = Union[str, colour.Color, Sequence[float]]
 
 EPSILON = 0.0001
 
@@ -27,7 +34,11 @@ class SampleSpace(Rectangle):
         "default_label_scale_val": 1,
     }
 
-    def add_title(self, title="Sample space", buff=MED_SMALL_BUFF):
+    def add_title(
+        self,
+        title: str = "Sample space",
+        buff: float = MED_SMALL_BUFF
+    ) -> None:
         '''添加标题 title'''
         # TODO, should this really exist in SampleSpaceScene
         title_mob = TexText(title)
@@ -37,10 +48,10 @@ class SampleSpace(Rectangle):
         self.title = title_mob
         self.add(title_mob)
 
-    def add_label(self, label):
+    def add_label(self, label: str) -> None:
         self.label = label
 
-    def complete_p_list(self, p_list):
+    def complete_p_list(self, p_list: list[float]) -> list[float]:
         '''将概率列表 ``p_list`` 补齐（如果不足，则添加一个概率 ``1-sum(p_list)``），返回补齐后的列表'''
         new_p_list = listify(p_list)
         remainder = 1.0 - sum(new_p_list)
@@ -48,7 +59,13 @@ class SampleSpace(Rectangle):
             new_p_list.append(remainder)
         return new_p_list
 
-    def get_division_along_dimension(self, p_list, dim, colors, vect):
+    def get_division_along_dimension(
+        self,
+        p_list: list[float],
+        dim: int,
+        colors: Iterable[ManimColor],
+        vect: np.ndarray
+    ) -> VGroup:
         p_list = self.complete_p_list(p_list)
         colors = color_gradient(colors, len(p_list))
 
@@ -65,40 +82,43 @@ class SampleSpace(Rectangle):
         return parts
 
     def get_horizontal_division(
-        self, p_list,
-        colors=[GREEN_E, BLUE_E],
-        vect=DOWN
-    ):
+        self,
+        p_list: list[float],
+        colors: Iterable[ManimColor] = [GREEN_E, BLUE_E],
+        vect: np.ndarray = DOWN
+    ) -> VGroup:
         return self.get_division_along_dimension(p_list, 1, colors, vect)
 
     def get_vertical_division(
-        self, p_list,
-        colors=[MAROON_B, YELLOW],
-        vect=RIGHT
-    ):
+        self,
+        p_list: list[float],
+        colors: Iterable[ManimColor] = [MAROON_B, YELLOW],
+        vect: np.ndarray = RIGHT
+    ) -> VGroup:
         return self.get_division_along_dimension(p_list, 0, colors, vect)
 
-    def divide_horizontally(self, *args, **kwargs):
+    def divide_horizontally(self, *args, **kwargs) -> None:
         '''根据概率列表 ``p_list`` 水平分割的 ``VGroup``，上色为 ``colors``'''
         self.horizontal_parts = self.get_horizontal_division(*args, **kwargs)
         self.add(self.horizontal_parts)
 
-    def divide_vertically(self, *args, **kwargs):
+    def divide_vertically(self, *args, **kwargs) -> None:
         '''根据概率列表 ``p_list`` 竖直分割的 ``VGroup``，上色为 ``colors``'''
         self.vertical_parts = self.get_vertical_division(*args, **kwargs)
         self.add(self.vertical_parts)
 
     def get_subdivision_braces_and_labels(
-        self, parts, labels, direction,
-        buff=SMALL_BUFF,
-        min_num_quads=1
-    ):
+        self,
+        parts: VGroup,
+        labels: str,
+        direction: np.ndarray,
+        buff: float = SMALL_BUFF,
+    ) -> VGroup:
         label_mobs = VGroup()
         braces = VGroup()
         for label, part in zip(labels, parts):
             brace = Brace(
                 part, direction,
-                min_num_quads=min_num_quads,
                 buff=buff
             )
             if isinstance(label, Mobject):
@@ -119,25 +139,38 @@ class SampleSpace(Rectangle):
         }
         return VGroup(parts.braces, parts.labels)
 
-    def get_side_braces_and_labels(self, labels, direction=LEFT, **kwargs):
+    def get_side_braces_and_labels(
+        self,
+        labels: str,
+        direction: np.ndarray = LEFT,
+        **kwargs
+    ) -> VGroup:
         '''获取侧边的大括号和标签（``VGroup(braces, labels)``），适用于调用 ``divide_horizontally`` 后的'''
         assert(hasattr(self, "horizontal_parts"))
         parts = self.horizontal_parts
         return self.get_subdivision_braces_and_labels(parts, labels, direction, **kwargs)
 
-    def get_top_braces_and_labels(self, labels, **kwargs):
+    def get_top_braces_and_labels(
+        self,
+        labels: str,
+        **kwargs
+    ) -> VGroup:
         '''获取上边的大括号和标签（``VGroup(braces, labels)``），适用于调用 ``divide_vertically`` 后的'''
         assert(hasattr(self, "vertical_parts"))
         parts = self.vertical_parts
         return self.get_subdivision_braces_and_labels(parts, labels, UP, **kwargs)
 
-    def get_bottom_braces_and_labels(self, labels, **kwargs):
+    def get_bottom_braces_and_labels(
+        self,
+        labels: str,
+        **kwargs
+    ) -> VGroup:
         '''获取底边的大括号和标签（``VGroup(braces, labels)``），适用于调用 ``divide_vertically`` 后的'''
         assert(hasattr(self, "vertical_parts"))
         parts = self.vertical_parts
         return self.get_subdivision_braces_and_labels(parts, labels, DOWN, **kwargs)
 
-    def add_braces_and_labels(self):
+    def add_braces_and_labels(self) -> None:
         '''调用 ``get_..._braces_and_labels`` 后将其自动添加到场景中'''
         for attr in "horizontal_parts", "vertical_parts":
             if not hasattr(self, attr):
@@ -147,7 +180,7 @@ class SampleSpace(Rectangle):
                 if hasattr(parts, subattr):
                     self.add(getattr(parts, subattr))
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int | slice) -> VGroup:
         if hasattr(self, "horizontal_parts"):
             return self.horizontal_parts[index]
         elif hasattr(self, "vertical_parts"):
@@ -174,7 +207,7 @@ class BarChart(VGroup):
         "bar_label_scale_val": 0.75,
     }
 
-    def __init__(self, values, **kwargs):
+    def __init__(self, values: Iterable[float], **kwargs):
         '''传入 values 列表表示所有值
 
         - ``height`` : 总高度
@@ -194,7 +227,7 @@ class BarChart(VGroup):
         self.add_bars(values)
         self.center()
 
-    def add_axes(self):
+    def add_axes(self) -> None:
         x_axis = Line(self.tick_width * LEFT / 2, self.width * RIGHT)
         y_axis = Line(MED_LARGE_BUFF * DOWN, self.height * UP)
         y_ticks = VGroup()
@@ -231,7 +264,7 @@ class BarChart(VGroup):
             self.y_axis_labels = labels
             self.add(labels)
 
-    def add_bars(self, values):
+    def add_bars(self, values: Iterable[float]) -> None:
         buff = float(self.width) / (2 * len(values))
         bars = VGroup()
         for i, value in enumerate(values):
@@ -256,7 +289,7 @@ class BarChart(VGroup):
         self.bars = bars
         self.bar_labels = bar_labels
 
-    def change_bar_values(self, values):
+    def change_bar_values(self, values: Iterable[float]) -> None:
         '''更改所有数据，传入新的 ``values`` 列表'''
         for bar, value in zip(self.bars, values):
             bar_bottom = bar.get_bottom()

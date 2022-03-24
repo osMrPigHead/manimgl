@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import Callable, Sequence
+
 from isosurfaces import plot_isoline
 
 from manimlib.constants import *
@@ -15,7 +19,12 @@ class ParametricCurve(VMobject):
         "use_smoothing": True,
     }
 
-    def __init__(self, t_func, t_range=None, **kwargs):
+    def __init__(
+        self,
+        t_func: Callable[[float], np.ndarray],
+        t_range: Sequence[float] | None = None,
+        **kwargs
+    ):
         '''
         传入 ``function`` 函数，自变量为参数 ``t`` ，返回值为一个三维点坐标
     
@@ -34,7 +43,7 @@ class ParametricCurve(VMobject):
         self.t_func = t_func
         VMobject.__init__(self, **kwargs)
 
-    def get_point_from_function(self, t):
+    def get_point_from_function(self, t: float) -> np.ndarray:
         '''获取 t 值对应的点坐标'''
         return self.t_func(t)
 
@@ -56,6 +65,18 @@ class ParametricCurve(VMobject):
             self.set_points([self.t_func(t_min)])
         return self
 
+    def get_t_func(self):
+        return self.t_func
+
+    def get_function(self):
+        if hasattr(self, "underlying_function"):
+            return self.underlying_function
+        if hasattr(self, "function"):
+            return self.function
+
+    def get_x_range(self):
+        if hasattr(self, "x_range"):
+            return self.x_range
 
 class FunctionGraph(ParametricCurve):
     '''y-x 函数图像'''
@@ -64,7 +85,12 @@ class FunctionGraph(ParametricCurve):
         "x_range": [-8, 8, 0.25],
     }
 
-    def __init__(self, function, x_range=None, **kwargs):
+    def __init__(
+        self,
+        function: Callable[[float], float],
+        x_range: Sequence[float] | None = None,
+        **kwargs
+    ):
         '''
         传入 ``function`` 函数，自变量为 x ，返回值为 y
     
@@ -81,14 +107,6 @@ class FunctionGraph(ParametricCurve):
 
         super().__init__(parametric_function, self.x_range, **kwargs)
 
-    def get_function(self):
-        '''返回 y-x 函数'''
-        return self.function
-
-    def get_point_from_function(self, x):
-        '''给出一个横坐标 x ，返回图像上横坐标为 x 的点坐标'''
-        return self.t_func(x)
-
 
 class ImplicitFunction(VMobject):
     """隐函数"""
@@ -100,7 +118,11 @@ class ImplicitFunction(VMobject):
         "use_smoothing": True
     }
 
-    def __init__(self, func, x_range=None, y_range=None, **kwargs):
+    def __init__(
+        self,
+        func: Callable[[float, float], float],
+        **kwargs
+    ):
         digest_config(self, kwargs)
         self.function = func
         super().__init__(**kwargs)

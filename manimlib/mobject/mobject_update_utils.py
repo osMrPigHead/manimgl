@@ -1,9 +1,18 @@
+from __future__ import annotations
+
 import inspect
+from typing import Callable
 
 from manimlib.constants import DEGREES
 from manimlib.constants import RIGHT
 from manimlib.mobject.mobject import Mobject
 from manimlib.utils.simple_functions import clip
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import numpy as np
+    from manimlib.animation.animation import Animation
 
 
 def assert_is_mobject_method(method):
@@ -39,14 +48,18 @@ def f_always(method, *arg_generators, **kwargs):
     return mobject
 
 
-def always_redraw(func, *args, **kwargs):
+def always_redraw(func: Callable[..., Mobject], *args, **kwargs) -> Mobject:
     """始终重复调用 ``func`` 生成新物体"""
     mob = func(*args, **kwargs)
     mob.add_updater(lambda m: mob.become(func(*args, **kwargs)))
     return mob
 
 
-def always_shift(mobject, direction=RIGHT, rate=0.1):
+def always_shift(
+    mobject: Mobject,
+    direction: np.ndarray = RIGHT,
+    rate: float = 0.1
+) -> Mobject:
     """将 ``mobject`` 始终向 ``direction`` 方向移动，速度为 ``rate``"""
     mobject.add_updater(
         lambda m, dt: m.shift(dt * rate * direction)
@@ -54,7 +67,11 @@ def always_shift(mobject, direction=RIGHT, rate=0.1):
     return mobject
 
 
-def always_rotate(mobject, rate=20 * DEGREES, **kwargs):
+def always_rotate(
+    mobject: Mobject,
+    rate: float = 20 * DEGREES,
+    **kwargs
+) -> Mobject:
     """将 ``mobject`` 始终旋转"""
     mobject.add_updater(
         lambda m, dt: m.rotate(dt * rate, **kwargs)
@@ -62,7 +79,11 @@ def always_rotate(mobject, rate=20 * DEGREES, **kwargs):
     return mobject
 
 
-def turn_animation_into_updater(animation, cycle=False, **kwargs):
+def turn_animation_into_updater(
+    animation: Animation,
+    cycle: bool = False,
+    **kwargs
+) -> Mobject:
     """将 ``animation`` 转化为对执行动画对象的 updater
     
     - ``cycle`` 为 True 时循环执行，否则只执行一次
@@ -92,7 +113,7 @@ def turn_animation_into_updater(animation, cycle=False, **kwargs):
     return mobject
 
 
-def cycle_animation(animation, **kwargs):
+def cycle_animation(animation: Animation, **kwargs) -> Mobject:
     '''默认保持循环的 ``turn_animation_into_updater``'''
     return turn_animation_into_updater(
         animation, cycle=True, **kwargs

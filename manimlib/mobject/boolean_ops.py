@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 import pathops
 
@@ -7,7 +9,7 @@ from manimlib.mobject.types.vectorized_mobject import VMobject
 # Boolean operations between 2D mobjects
 # Borrowed from from https://github.com/ManimCommunity/manim/
 
-def _convert_vmobject_to_skia_path(vmobject):
+def _convert_vmobject_to_skia_path(vmobject: VMobject) -> pathops.Path:
     path = pathops.Path()
     subpaths = vmobject.get_subpaths_from_points(vmobject.get_all_points())
     for subpath in subpaths:
@@ -21,7 +23,10 @@ def _convert_vmobject_to_skia_path(vmobject):
     return path
 
 
-def _convert_skia_path_to_vmobject(path, vmobject):
+def _convert_skia_path_to_vmobject(
+    path: pathops.Path,
+    vmobject: VMobject
+) -> VMobject:
     PathVerb = pathops.PathVerb
     current_path_start = np.array([0.0, 0.0, 0.0])
     for path_verb, points in path:
@@ -50,7 +55,7 @@ class Union(VMobject):
 
     传入两个及以上 ``VMobject``，返回它们并集的外轮廓
     """
-    def __init__(self, *vmobjects, **kwargs):
+    def __init__(self, *vmobjects: VMobject, **kwargs):
         if len(vmobjects) < 2:
             raise ValueError("At least 2 mobjects needed for Union.")
         super().__init__(**kwargs)
@@ -70,7 +75,7 @@ class Difference(VMobject):
 
     传入 submobject 和 clip，返回 submobject 裁去 clip 部分的轮廓线
     """
-    def __init__(self, subject, clip, **kwargs):
+    def __init__(self, subject: VMobject, clip: VMobject, **kwargs):
         super().__init__(**kwargs)
         outpen = pathops.Path()
         pathops.difference(
@@ -88,7 +93,7 @@ class Intersection(VMobject):
 
     传入两个及以上 ``VMobject``，返回它们交集的外轮廓
     """
-    def __init__(self, *vmobjects, **kwargs):
+    def __init__(self, *vmobjects: VMobject, **kwargs):
         if len(vmobjects) < 2:
             raise ValueError("At least 2 mobjects needed for Intersection.")
         super().__init__(**kwargs)
@@ -117,7 +122,7 @@ class Exclusion(VMobject):
 
     传入两个及以上 ``VMobject``，返回它们经过 ``XOR`` 运算后图形的的外轮廓
     """
-    def __init__(self, *vmobjects, **kwargs):
+    def __init__(self, *vmobjects: VMobject, **kwargs):
         if len(vmobjects) < 2:
             raise ValueError("At least 2 mobjects needed for Exclusion.")
         super().__init__(**kwargs)

@@ -1,4 +1,9 @@
+from __future__ import annotations
+
+from typing import Callable
+
 import numpy as np
+
 from manimlib.constants import BLUE_D
 from manimlib.constants import BLUE_B
 from manimlib.constants import BLUE_E
@@ -23,7 +28,7 @@ class AnimatedBoundary(VGroup):
         "fade_rate_func": smooth,
     }
 
-    def __init__(self, vmobject, **kwargs):
+    def __init__(self, vmobject: VMobject, **kwargs):
         '''
         传入需要显示动态边界的物体 ``vmobject``
     
@@ -32,8 +37,8 @@ class AnimatedBoundary(VGroup):
         - ``cycle_rate`` 表示循环率
         '''
         super().__init__(**kwargs)
-        self.vmobject = vmobject
-        self.boundary_copies = [
+        self.vmobject: VMobject = vmobject
+        self.boundary_copies: list[VMobject] = [
             vmobject.copy().set_style(
                 stroke_width=0,
                 fill_opacity=0
@@ -41,12 +46,12 @@ class AnimatedBoundary(VGroup):
             for x in range(2)
         ]
         self.add(*self.boundary_copies)
-        self.total_time = 0
+        self.total_time: float = 0
         self.add_updater(
             lambda m, dt: self.update_boundary_copies(dt)
         )
 
-    def update_boundary_copies(self, dt):
+    def update_boundary_copies(self, dt: float) -> None:
         # Not actual time, but something which passes at
         # an altered rate to make the implementation below
         # cleaner
@@ -77,7 +82,13 @@ class AnimatedBoundary(VGroup):
 
         self.total_time += dt
 
-    def full_family_become_partial(self, mob1, mob2, a, b):
+    def full_family_become_partial(
+        self,
+        mob1: VMobject,
+        mob2: VMobject,
+        a: float,
+        b: float
+    ):
         family1 = mob1.family_members_with_points()
         family2 = mob2.family_members_with_points()
         for sm1, sm2 in zip(family1, family2):
@@ -97,7 +108,7 @@ class TracedPath(VMobject):
         "time_per_anchor": 1 / 15,
     }
 
-    def __init__(self, traced_point_func, **kwargs):
+    def __init__(self, traced_point_func: Callable[[], np.ndarray], **kwargs):
         '''
         传入一个可调用的对象 ``traced_point_func`` (一般为 ``mob.get_center`` )
 
@@ -107,11 +118,11 @@ class TracedPath(VMobject):
         '''
         super().__init__(**kwargs)
         self.traced_point_func = traced_point_func
-        self.time = 0
-        self.traced_points = []
+        self.time: float = 0
+        self.traced_points: list[np.ndarray] = []
         self.add_updater(lambda m, dt: m.update_path(dt))
 
-    def update_path(self, dt):
+    def update_path(self, dt: float):
         if dt == 0:
             return self
         point = self.traced_point_func().copy()
@@ -154,7 +165,11 @@ class TracingTail(TracedPath):
         "time_traced": 1.0,
     }
 
-    def __init__(self, mobject_or_func, **kwargs):
+    def __init__(
+        self,
+        mobject_or_func: Mobject | Callable[[], np.ndarray],
+        **kwargs
+    ):
         """传入一个 ``Mobject`` 或者一个可调用的对象 ``func``（如 ``line.get_end``），追踪其运动轨迹"""
         if isinstance(mobject_or_func, Mobject):
             func = mobject_or_func.get_center

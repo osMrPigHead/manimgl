@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import Callable
+
 from manimlib.animation.animation import Animation
 from manimlib.mobject.numbers import DecimalNumber
 from manimlib.utils.bezier import interpolate
@@ -8,12 +12,17 @@ class ChangingDecimal(Animation):
         "suspend_mobject_updating": False,
     }
 
-    def __init__(self, decimal_mob, number_update_func, **kwargs):
+    def __init__(
+        self,
+        decimal_mob: DecimalNumber,
+        number_update_func: Callable[[float], float],
+        **kwargs
+    ):
         assert(isinstance(decimal_mob, DecimalNumber))
         self.number_update_func = number_update_func
         super().__init__(decimal_mob, **kwargs)
 
-    def interpolate_mobject(self, alpha):
+    def interpolate_mobject(self, alpha: float) -> None:
         self.mobject.set_value(
             self.number_update_func(alpha)
         )
@@ -21,7 +30,12 @@ class ChangingDecimal(Animation):
 
 class ChangeDecimalToValue(ChangingDecimal):
     '''从当前数字播放到目标数字'''
-    def __init__(self, decimal_mob, target_number, **kwargs):
+    def __init__(
+        self,
+        decimal_mob: DecimalNumber,
+        target_number: float | complex,
+        **kwargs
+    ):
         start_number = decimal_mob.number
         super().__init__(
             decimal_mob,
@@ -32,7 +46,12 @@ class ChangeDecimalToValue(ChangingDecimal):
 
 class CountInFrom(ChangingDecimal):
     '''从 source_number 开始播放到当前数字'''
-    def __init__(self, decimal_mob, source_number=0, **kwargs):
+    def __init__(
+        self,
+        decimal_mob: DecimalNumber,
+        source_number: float | complex = 0,
+        **kwargs
+    ):
         start_number = decimal_mob.number
         super().__init__(
             decimal_mob,
