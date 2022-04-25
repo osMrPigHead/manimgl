@@ -1,18 +1,23 @@
 from __future__ import annotations
 
-import moderngl
-from colour import Color
-import OpenGL.GL as gl
-
 import itertools as it
+import math
 
+import moderngl
 import numpy as np
-from scipy.spatial.transform import Rotation
+import OpenGL.GL as gl
 from PIL import Image
+from scipy.spatial.transform import Rotation
 
-from manimlib.constants import *
+from manimlib.constants import BLACK
+from manimlib.constants import DEGREES, RADIANS
+from manimlib.constants import DEFAULT_FRAME_RATE
+from manimlib.constants import DEFAULT_PIXEL_HEIGHT, DEFAULT_PIXEL_WIDTH
+from manimlib.constants import FRAME_HEIGHT, FRAME_WIDTH
+from manimlib.constants import DOWN, LEFT, ORIGIN, OUT, RIGHT, UP
 from manimlib.mobject.mobject import Mobject
 from manimlib.mobject.mobject import Point
+from manimlib.utils.color import color_to_rgba
 from manimlib.utils.config_ops import digest_config
 from manimlib.utils.simple_functions import fdiv
 from manimlib.utils.space_ops import normalize
@@ -28,13 +33,14 @@ class CameraFrame(Mobject):
     CONFIG = {
         "frame_shape": (FRAME_WIDTH, FRAME_HEIGHT),
         "center_point": ORIGIN,
-        "focal_distance": 2,
+        "focal_dist_to_height": 2,
     }
 
     def init_uniforms(self) -> None:
         super().init_uniforms()
         # As a quaternion
         self.uniforms["orientation"] = Rotation.identity().as_quat()
+        self.uniforms["focal_dist_to_height"] = self.focal_dist_to_height
 
     def init_points(self) -> None:
         self.set_points([ORIGIN, LEFT, RIGHT, DOWN, UP])
@@ -58,7 +64,16 @@ class CameraFrame(Mobject):
         return self
 
     def get_euler_angles(self):
-        return self.get_orientation().as_euler("xzy")
+        return self.get_orientation().as_euler("zxz")[::-1]
+
+    def get_theta(self):
+        return self.get_euler_angles()[0]
+
+    def get_phi(self):
+        return self.get_euler_angles()[1]
+
+    def get_gamma(self):
+        return self.get_euler_angles()[2]
 
     def get_inverse_camera_rotation_matrix(self):
         return self.get_orientation().as_matrix().T
@@ -75,11 +90,11 @@ class CameraFrame(Mobject):
         gamma: float | None = None,
         units: float = RADIANS
     ):
-        eulers = self.get_euler_angles()  # phi, theta, gamma
-        for i, var in enumerate([phi, theta, gamma]):
+        eulers = self.get_euler_angles()  # theta, phi, gamma
+        for i, var in enumerate([theta, phi, gamma]):
             if var is not None:
                 eulers[i] = var * units
-        self.set_orientation(Rotation.from_euler('xzy', eulers))
+        self.set_orientation(Rotation.from_euler("zxz", eulers[::-1]))
         return self
 
     def reorient(
@@ -115,6 +130,14 @@ class CameraFrame(Mobject):
         self.rotate(dgamma, self.get_inverse_camera_rotation_matrix()[2])
         return self
 
+    def set_focal_distance(self, focal_distance: float):
+        self.uniforms["focal_dist_to_height"] = focal_distance / self.get_height()
+        return self
+
+    def set_field_of_view(self, field_of_view: float):
+        self.uniforms["focal_dist_to_height"] = 2 * math.tan(field_of_view / 2)
+        return self
+
     def get_shape(self):
         '''获取相机宽高'''
         return (self.get_width(), self.get_height())
@@ -132,7 +155,10 @@ class CameraFrame(Mobject):
         return points[4, 1] - points[3, 1]
 
     def get_focal_distance(self) -> float:
-        return self.focal_distance * self.get_height()
+        return self.uniforms["focal_dist_to_height"] * self.get_height()
+
+    def get_field_of_view(self) -> float:
+        return 2 * math.atan(self.uniforms["focal_dist_to_height"] / 2)
 
     def get_implied_camera_location(self) -> np.ndarray:
         to_camera = self.get_inverse_camera_rotation_matrix()[2]
@@ -180,17 +206,19 @@ class Camera(object):
         '''
         digest_config(self, kwargs, locals())
         self.rgb_max_val: float = np.iinfo(self.pixel_array_dtype).max
-        self.background_rgba: list[float] = [
-            *Color(self.background_color).get_rgb(),
-            self.background_opacity
-        ]
+        self.background_rgba: list[float] = list(color_to_rgba(
+            self.background_color, self.background_opacity
+        ))
         self.init_frame()
         self.init_context(ctx)
         self.init_shaders()
         self.init_textures()
         self.init_light_source()
         self.refresh_perspective_uniforms()
-        self.static_mobject_to_render_group_list = {}
+        # A cached map from mobjects to their associated list of render groups
+        # so that these render groups are not regenerated unnecessarily for static
+        # mobjects
+        self.mob_to_render_groups = {}
 
     def init_frame(self) -> None:
         self.frame = CameraFrame(**self.frame_config)
@@ -371,12 +399,21 @@ class Camera(object):
         if render_group["single_use"]:
             self.release_render_group(render_group)
 
-    def get_render_group_list(self, mobject: Mobject) -> list[dict[str]] | map[dict[str]]:
-        '''获取渲染列表'''
-        try:
-            return self.static_mobject_to_render_group_list[id(mobject)]
-        except KeyError:
-            return map(self.get_render_group, mobject.get_shader_wrapper_list())
+    def get_render_group_list(self, mobject: Mobject) -> Iterable[dict[str]]:
+        if mobject.is_changing():
+            return self.generate_render_group_list(mobject)
+
+        # Otherwise, cache result for later use
+        key = id(mobject)
+        if key not in self.mob_to_render_groups:
+            self.mob_to_render_groups[key] = list(self.generate_render_group_list(mobject))
+        return self.mob_to_render_groups[key]
+
+    def generate_render_group_list(self, mobject: Mobject) -> Iterable[dict[str]]:
+        return (
+            self.get_render_group(sw, single_use=mobject.is_changing())
+            for sw in mobject.get_shader_wrapper_list()
+        )
 
     def get_render_group(
         self,
@@ -425,24 +462,10 @@ class Camera(object):
             if render_group[key] is not None:
                 render_group[key].release()
 
-    def set_mobjects_as_static(self, *mobjects: Mobject) -> None:
-        '''
-        将物件设置为静态
-
-        Creates buffer and array objects holding each mobjects shader data'''
-        # Creates buffer and array objects holding each mobjects shader data
-        for mob in mobjects:
-            self.static_mobject_to_render_group_list[id(mob)] = [
-                self.get_render_group(sw, single_use=False)
-                for sw in mob.get_shader_wrapper_list()
-            ]
-
-    def release_static_mobjects(self) -> None:
-        '''释放静态物件'''
-        for rg_list in self.static_mobject_to_render_group_list.values():
-            for render_group in rg_list:
-                self.release_render_group(render_group)
-        self.static_mobject_to_render_group_list = {}
+    def refresh_static_mobjects(self) -> None:
+        for render_group in it.chain(*self.mob_to_render_groups.values()):
+            self.release_render_group(render_group)
+        self.mob_to_render_groups = {}
 
     # Shaders
     def init_shaders(self) -> None:

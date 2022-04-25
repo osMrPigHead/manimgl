@@ -1,16 +1,24 @@
 from __future__ import annotations
 
-from typing import Iterable, Sequence
+import numpy as np
 
-from manimlib.constants import *
+from manimlib.constants import DOWN, LEFT, RIGHT, UP
+from manimlib.constants import GREY_B
+from manimlib.constants import MED_SMALL_BUFF
 from manimlib.mobject.geometry import Line
 from manimlib.mobject.numbers import DecimalNumber
 from manimlib.mobject.types.vectorized_mobject import VGroup
 from manimlib.utils.bezier import interpolate
+from manimlib.utils.bezier import outer_interpolate
 from manimlib.utils.config_ops import digest_config
 from manimlib.utils.config_ops import merge_dicts_recursively
 from manimlib.utils.simple_functions import fdiv
 from manimlib.utils.space_ops import normalize
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Iterable, Sequence
 
 
 class NumberLine(Line):
@@ -120,7 +128,7 @@ class NumberLine(Line):
     def number_to_point(self, number: float | np.ndarray) -> np.ndarray:
         '''输入一个数轴上的数，返回它的绝对坐标，number -> array[x, y, 0]'''
         alpha = (number - self.x_min) / (self.x_max - self.x_min)
-        return interpolate(self.get_start(), self.get_end(), alpha)
+        return outer_interpolate(self.get_start(), self.get_end(), alpha)
 
     def point_to_number(self, point: np.ndarray) -> float:
         '''输入一个绝对坐标，返回这个坐标在数轴上标的数，array[x, y, 0] -> number'''

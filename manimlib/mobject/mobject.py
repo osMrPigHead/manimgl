@@ -1,48 +1,61 @@
 from __future__ import annotations
 
-import sys
 import copy
-import random
-import itertools as it
 from functools import wraps
-from typing import Iterable, Callable, Union, Sequence
+import itertools as it
+import os
+import pickle
+import random
+import sys
 
-import colour
 import moderngl
+import numbers
 import numpy as np
-import numpy.typing as npt
 
-from manimlib.constants import *
+from manimlib.constants import DEFAULT_MOBJECT_TO_EDGE_BUFFER
+from manimlib.constants import DEFAULT_MOBJECT_TO_MOBJECT_BUFFER
+from manimlib.constants import DOWN, IN, LEFT, ORIGIN, OUT, RIGHT, UP
+from manimlib.constants import FRAME_X_RADIUS, FRAME_Y_RADIUS
+from manimlib.constants import MED_SMALL_BUFF
+from manimlib.constants import TAU
+from manimlib.constants import WHITE
+from manimlib.event_handler import EVENT_DISPATCHER
+from manimlib.event_handler.event_listner import EventListner
+from manimlib.event_handler.event_type import EventType
+from manimlib.logger import log
+from manimlib.shader_wrapper import get_colormap_code
+from manimlib.shader_wrapper import ShaderWrapper
 from manimlib.utils.color import color_gradient
+from manimlib.utils.color import color_to_rgb
 from manimlib.utils.color import get_colormap_list
 from manimlib.utils.color import rgb_to_hex
-from manimlib.utils.color import color_to_rgb
 from manimlib.utils.config_ops import digest_config
 from manimlib.utils.iterables import batch_by_property
 from manimlib.utils.iterables import list_update
+from manimlib.utils.iterables import listify
 from manimlib.utils.iterables import resize_array
 from manimlib.utils.iterables import resize_preserving_order
 from manimlib.utils.iterables import resize_with_interpolation
-from manimlib.utils.iterables import make_even
-from manimlib.utils.iterables import listify
-from manimlib.utils.bezier import interpolate
 from manimlib.utils.bezier import integer_interpolate
+from manimlib.utils.bezier import interpolate
 from manimlib.utils.paths import straight_path
 from manimlib.utils.simple_functions import get_parameters
 from manimlib.utils.space_ops import angle_of_vector
 from manimlib.utils.space_ops import get_norm
 from manimlib.utils.space_ops import rotation_matrix_transpose
-from manimlib.shader_wrapper import ShaderWrapper
-from manimlib.shader_wrapper import get_colormap_code
-from manimlib.event_handler import EVENT_DISPATCHER
-from manimlib.event_handler.event_listner import EventListner
-from manimlib.event_handler.event_type import EventType
 
+from typing import TYPE_CHECKING
 
-TimeBasedUpdater = Callable[["Mobject", float], None]
-NonTimeUpdater = Callable[["Mobject"], None]
-Updater = Union[TimeBasedUpdater, NonTimeUpdater]
-ManimColor = Union[str, colour.Color, Sequence[float]]
+if TYPE_CHECKING:
+    from colour import Color
+    from typing import Callable, Iterable, Sequence, Union
+
+    import numpy.typing as npt
+
+    TimeBasedUpdater = Callable[["Mobject", float], None]
+    NonTimeUpdater = Callable[["Mobject"], None]
+    Updater = Union[TimeBasedUpdater, NonTimeUpdater]
+    ManimColor = Union[str, Color]
 
 
 class Mobject(object):
@@ -69,7 +82,7 @@ class Mobject(object):
         # Must match in attributes of vert shader
         "shader_dtype": [
             ('point', np.float32, (3,)),
-        ]
+        ],
     }
 
     def __init__(self, **kwargs):
@@ -79,6 +92,9 @@ class Mobject(object):
         self.family: list[Mobject] = [self]
         self.locked_data_keys: set[str] = set()
         self.needs_new_bounding_box: bool = True
+        self._is_animating: bool = False
+        self.saved_state = None
+        self.target = None
 
         self.init_data()
         self.init_uniforms()
@@ -132,8 +148,10 @@ class Mobject(object):
 
     def set_uniforms(self, uniforms: dict):
         '''设置 uniform 变量，以字典形式传入'''
-        for key in uniforms:
-            self.uniforms[key] = uniforms[key]  # Copy?
+        for key, value in uniforms.items():
+            if isinstance(value, np.ndarray):
+                value = value.copy()
+            self.uniforms[key] = value
         return self
 
     @property
@@ -282,16 +300,31 @@ class Mobject(object):
                 parent.refresh_bounding_box()
         return self
 
-    def is_point_touching(
+    def are_points_touching(
         self,
-        point: np.ndarray,
+        points: np.ndarray,
         buff: float = MED_SMALL_BUFF
     ) -> bool:
         '''判断某一点是否在本物件的包围框范围内'''
         bb = self.get_bounding_box()
         mins = (bb[0] - buff)
         maxs = (bb[2] + buff)
-        return (point >= mins).all() and (point <= maxs).all()
+        return ((points >= mins) * (points <= maxs)).all(1)
+
+    def is_point_touching(
+        self,
+        point: np.ndarray,
+        buff: float = MED_SMALL_BUFF
+    ) -> bool:
+        return self.are_points_touching(np.array(point, ndmin=2), buff)[0]
+
+    def is_touching(self, mobject: Mobject, buff: float = 1e-2) -> bool:
+        bb1 = self.get_bounding_box()
+        bb2 = mobject.get_bounding_box()
+        return not any((
+            (bb2[2] < bb1[0] - buff).any(),  # E.g. Right of mobject is left of self's left
+            (bb2[0] > bb1[2] + buff).any(),  # E.g. Left of mobject is right of self's right
+        ))
 
     # Family matters
 
@@ -450,21 +483,6 @@ class Mobject(object):
         self.center()
         return self
 
-    def replicate(self, n: int) -> Group:
-        return self.get_group_class()(
-            *(self.copy() for x in range(n))
-        )
-
-    def get_grid(self, n_rows: int, n_cols: int, height: float | None = None, **kwargs):
-        """
-        拷贝一份，并将这份拷贝按表格方式排好后返回
-        """
-        grid = self.replicate(n_rows * n_cols)
-        grid.arrange_in_grid(n_rows, n_cols, **kwargs)
-        if height is not None:
-            grid.set_height(height)
-        return grid
-
     def sort(
         self,
         point_to_num_func: Callable[[np.ndarray], float] = lambda p: p[0],
@@ -487,76 +505,140 @@ class Mobject(object):
         self.assemble_family()
         return self
 
-    # Copying
+    # Copying and serialization
 
-    def copy(self):
-        '''获取物件的拷贝'''
-        # TODO, either justify reason for shallow copy, or
-        # remove this redundancy everywhere
-        # return self.deepcopy()
+    def stash_mobject_pointers(func):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            uncopied_attrs = ["parents", "target", "saved_state"]
+            stash = dict()
+            for attr in uncopied_attrs:
+                if hasattr(self, attr):
+                    value = getattr(self, attr)
+                    stash[attr] = value
+                    null_value = [] if isinstance(value, list) else None
+                    setattr(self, attr, null_value)
+            result = func(self, *args, **kwargs)
+            self.__dict__.update(stash)
+            return result
+        return wrapper
 
-        parents = self.parents
-        self.parents = []
-        copy_mobject = copy.copy(self)
-        self.parents = parents
+    @stash_mobject_pointers
+    def serialize(self):
+        return pickle.dumps(self)
 
-        copy_mobject.data = dict(self.data)
-        for key in self.data:
-            copy_mobject.data[key] = self.data[key].copy()
-
-        # TODO, are uniforms ever numpy arrays?
-        copy_mobject.uniforms = dict(self.uniforms)
-
-        copy_mobject.submobjects = []
-        copy_mobject.add(*[sm.copy() for sm in self.submobjects])
-        copy_mobject.match_updaters(self)
-
-        copy_mobject.needs_new_bounding_box = self.needs_new_bounding_box
-
-        # Make sure any mobject or numpy array attributes are copied
-        family = self.get_family()
-        for attr, value in list(self.__dict__.items()):
-            if isinstance(value, Mobject) and value in family and value is not self:
-                setattr(copy_mobject, attr, value.copy())
-            if isinstance(value, np.ndarray):
-                setattr(copy_mobject, attr, value.copy())
-            if isinstance(value, ShaderWrapper):
-                setattr(copy_mobject, attr, value.copy())
-        return copy_mobject
+    def deserialize(self, data: bytes):
+        self.become(pickle.loads(data))
+        return self
 
     def deepcopy(self):
-        parents = self.parents
-        self.parents = []
-        result = copy.deepcopy(self)
-        self.parents = parents
+        try:
+            # Often faster than deepcopy
+            return pickle.loads(pickle.dumps(self))
+        except AttributeError:
+            return copy.deepcopy(self)
+
+    @stash_mobject_pointers
+    def copy(self, deep: bool = False):
+        if deep:
+            return self.deepcopy()
+
+        result = copy.copy(self)
+
+        # The line above is only a shallow copy, so the internal
+        # data which are numpyu arrays or other mobjects still
+        # need to be further copied.
+        result.data = {
+            key: np.array(value)
+            for key, value in self.data.items()
+        }
+        result.uniforms = {
+            key: np.array(value)
+            for key, value in self.uniforms.items()
+        }
+
+        result.submobjects = []
+        result.add(*(sm.copy() for sm in self.submobjects))
+        result.match_updaters(self)
+
+        family = self.get_family()
+        for attr, value in list(self.__dict__.items()):
+            if isinstance(value, Mobject) and value is not self:
+                if value in family:
+                    setattr(result, attr, result.family[self.family.index(value)])
+                else:
+                    setattr(result, attr, value.copy())
+            if isinstance(value, np.ndarray):
+                setattr(result, attr, value.copy())
+            if isinstance(value, ShaderWrapper):
+                setattr(result, attr, value.copy())
         return result
 
     def generate_target(self, use_deepcopy: bool = False):
         '''通过复制自身作为自己的 target, 生成一个 target 属性'''
-        self.target = None  # Prevent exponential explosion
-        if use_deepcopy:
-            self.target = self.deepcopy()
-        else:
-            self.target = self.copy()
+        self.target = self.copy(deep=use_deepcopy)
+        self.target.saved_state = self.saved_state
         return self.target
 
     def save_state(self, use_deepcopy: bool = False):
         '''保留状态，即复制一份作为 ``saved_state`` 属性'''
-        if hasattr(self, "saved_state"):
-            # Prevent exponential growth of data
-            self.saved_state = None
-        if use_deepcopy:
-            self.saved_state = self.deepcopy()
-        else:
-            self.saved_state = self.copy()
+        self.saved_state = self.copy(deep=use_deepcopy)
+        self.saved_state.target = self.target
         return self
 
     def restore(self):
         '''恢复为 ``saved_state`` 的状态'''
-        if not hasattr(self, "saved_state") or self.save_state is None:
+        if not hasattr(self, "saved_state") or self.saved_state is None:
             raise Exception("Trying to restore without having saved")
         self.become(self.saved_state)
         return self
+
+    def save_to_file(self, file_path: str, supress_overwrite_warning: bool = False):
+        with open(file_path, "wb") as fp:
+            fp.write(self.serialize())
+        log.info(f"Saved mobject to {file_path}")
+        return self
+
+    @staticmethod
+    def load(file_path):
+        if not os.path.exists(file_path):
+            log.error(f"No file found at {file_path}")
+            sys.exit(2)
+        with open(file_path, "rb") as fp:
+            mobject = pickle.load(fp)
+        return mobject
+
+    def become(self, mobject: Mobject):
+        """
+        重构物件数据并将它变成传入的 ``mobject``
+        """
+        self.align_family(mobject)
+        for sm1, sm2 in zip(self.get_family(), mobject.get_family()):
+            sm1.set_data(sm2.data)
+            sm1.set_uniforms(sm2.uniforms)
+            sm1.shader_folder = sm2.shader_folder
+            sm1.texture_paths = sm2.texture_paths
+            sm1.depth_test = sm2.depth_test
+            sm1.render_primitive = sm2.render_primitive
+        self.refresh_bounding_box(recurse_down=True)
+        return self
+
+    # Creating new Mobjects from this one
+
+    def replicate(self, n: int) -> Group:
+        group_class = self.get_group_class()
+        return group_class(*(self.copy() for _ in range(n)))
+
+    def get_grid(self, n_rows: int, n_cols: int, height: float | None = None, **kwargs) -> Group:
+        """
+        Returns a new mobject containing multiple copies of this one
+        arranged in a grid
+        """
+        grid = self.replicate(n_rows * n_cols)
+        grid.arrange_in_grid(n_rows, n_cols, **kwargs)
+        if height is not None:
+            grid.set_height(height)
+        return grid
 
     # Updating
 
@@ -609,6 +691,8 @@ class Mobject(object):
             updater_list.insert(index, update_function)
 
         self.refresh_has_updater_status()
+        for parent in self.parents:
+            parent.has_updaters = True
         if call_updater:
             self.update(dt=0)
         return self
@@ -625,10 +709,10 @@ class Mobject(object):
         '''清空所有的 ``updater`` 函数'''
         self.time_based_updaters = []
         self.non_time_updaters = []
-        self.refresh_has_updater_status()
         if recurse:
             for submob in self.submobjects:
                 submob.clear_updaters()
+        self.refresh_has_updater_status()
         return self
 
     def match_updaters(self, mobject: Mobject):
@@ -662,6 +746,16 @@ class Mobject(object):
         self.has_updaters = any(mob.get_updaters() for mob in self.get_family())
         return self
 
+    # Check if mark as static or not for camera
+
+    def is_changing(self) -> bool:
+        return self._is_animating or self.has_updaters
+
+    def set_animating_status(self, is_animating: bool, recurse: bool = True) -> None:
+        for mob in self.get_family(recurse):
+            mob._is_animating = is_animating
+        return self
+
     # Transforming operations
 
     def shift(self, vector: np.ndarray):
@@ -683,10 +777,10 @@ class Mobject(object):
         """
         放大 (缩小) 到原来的 ``scale_factor`` 倍，可以传入 ``about_point/about_edge``
         """
-        if isinstance(scale_factor, Iterable):
-            scale_factor = np.array(scale_factor).clip(min=min_scale_factor)
-        else:
+        if isinstance(scale_factor, numbers.Number):
             scale_factor = max(scale_factor, min_scale_factor)
+        else:
+            scale_factor = np.array(scale_factor).clip(min=min_scale_factor)
         self.apply_points_function(
             lambda points: scale_factor * points,
             about_point=about_point,
@@ -1106,8 +1200,8 @@ class Mobject(object):
 
     def set_rgba_array_by_color(
         self,
-        color: ManimColor | None = None,
-        opacity: float | None = None,
+        color: ManimColor | Iterable[ManimColor] | None = None,
+        opacity: float | Iterable[float] | None = None,
         name: str = "rgbas",
         recurse: bool = True
     ):
@@ -1130,7 +1224,12 @@ class Mobject(object):
                 mob.data[name][:, 3] = resize_array(opacities, size)
         return self
 
-    def set_color(self, color: ManimColor, opacity: float | None = None, recurse: bool = True):
+    def set_color(
+        self,
+        color: ManimColor | Iterable[ManimColor] | None,
+        opacity: float | Iterable[float] | None = None,
+        recurse: bool = True
+    ):
         '''设置颜色'''
         self.set_rgba_array_by_color(color, opacity, recurse=False)
         # Recurse to submobjects differently from how set_rgba_array_by_color
@@ -1140,7 +1239,11 @@ class Mobject(object):
                 submob.set_color(color, recurse=True)
         return self
 
-    def set_opacity(self, opacity: float, recurse: bool = True):
+    def set_opacity(
+        self,
+        opacity: float | Iterable[float] | None,
+        recurse: bool = True
+    ):
         '''设置透明度'''
         self.set_rgba_array_by_color(color=None, opacity=opacity, recurse=False)
         if recurse:
@@ -1257,6 +1360,13 @@ class Mobject(object):
     def get_corner(self, direction: np.ndarray) -> np.ndarray:
         '''获取某一个角落'''
         return self.get_bounding_box_point(direction)
+
+    def get_all_corners(self):
+        bb = self.get_bounding_box()
+        return np.array([
+            [bb[indices[-i + 1]][i] for i in range(3)]
+            for indices in it.product([0, 2], repeat=3)
+        ])
 
     def get_center(self) -> np.ndarray:
         '''获取物件中心坐标'''
@@ -1512,7 +1622,7 @@ class Mobject(object):
         return self
 
     def push_self_into_submobjects(self):
-        copy = self.deepcopy()
+        copy = self.copy()
         copy.set_submobjects([])
         self.resize_points(0)
         self.add(copy)
@@ -1591,17 +1701,6 @@ class Mobject(object):
         生成一个路径百分比从 a 到 b 的物件
         """
         pass  # To implement in subclass
-
-    def become(self, mobject: Mobject):
-        """
-        重构物件数据并将它变成传入的 ``mobject``
-        """
-        self.align_family(mobject)
-        for sm1, sm2 in zip(self.get_family(), mobject.get_family()):
-            sm1.set_data(sm2.data)
-            sm1.set_uniforms(sm2.uniforms)
-        self.refresh_bounding_box(recurse_down=True)
-        return self
 
     # Locking data
 

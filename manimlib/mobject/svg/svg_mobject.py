@@ -1,27 +1,24 @@
 from __future__ import annotations
 
-import os
 import hashlib
-import itertools as it
-from typing import Callable
+import os
 from xml.etree import ElementTree as ET
 
-import svgelements as se
 import numpy as np
+import svgelements as se
 
 from manimlib.constants import RIGHT
-from manimlib.mobject.geometry import Line
+from manimlib.logger import log
 from manimlib.mobject.geometry import Circle
+from manimlib.mobject.geometry import Line
 from manimlib.mobject.geometry import Polygon
 from manimlib.mobject.geometry import Polyline
 from manimlib.mobject.geometry import Rectangle
 from manimlib.mobject.geometry import RoundedRectangle
 from manimlib.mobject.types.vectorized_mobject import VMobject
-from manimlib.utils.config_ops import digest_config
 from manimlib.utils.directories import get_mobject_data_dir
 from manimlib.utils.images import get_full_vector_image_path
 from manimlib.utils.iterables import hash_obj
-from manimlib.logger import log
 
 
 SVG_HASH_TO_MOB_MAP: dict[int, VMobject] = {}
@@ -59,6 +56,7 @@ class SVGMobject(VMobject):
         },
         "path_string_config": {},
     }
+
     def __init__(self, file_name: str | None = None, **kwargs):
         super().__init__(**kwargs)
         self.file_name = file_name or self.file_name
@@ -173,6 +171,8 @@ class SVGMobject(VMobject):
             else:
                 log.warning(f"Unsupported element type: {type(shape)}")
                 continue
+            if not mob.has_points():
+                continue
             self.apply_style_to_mobject(mob, shape)
             if isinstance(shape, se.Transformable) and shape.apply:
                 self.handle_transform(mob, shape.transform)
@@ -197,9 +197,9 @@ class SVGMobject(VMobject):
     ) -> VMobject:
         mob.set_style(
             stroke_width=shape.stroke_width,
-            stroke_color=shape.stroke.hex,
+            stroke_color=shape.stroke.hexrgb,
             stroke_opacity=shape.stroke.opacity,
-            fill_color=shape.fill.hex,
+            fill_color=shape.fill.hexrgb,
             fill_opacity=shape.fill.opacity
         )
         return mob

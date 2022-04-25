@@ -1,22 +1,26 @@
 from __future__ import annotations
 
+from functools import reduce
 import math
 import operator as op
-from functools import reduce
-from typing import Callable, Iterable, Sequence
+import platform
 
-import numpy as np
-import numpy.typing as npt
 from mapbox_earcut import triangulate_float32 as earcut
+import numpy as np
 from scipy.spatial.transform import Rotation
+from tqdm import tqdm as ProgressDisplay
 
-from manimlib.constants import RIGHT
-from manimlib.constants import DOWN
-from manimlib.constants import OUT
-from manimlib.constants import PI
-from manimlib.constants import TAU
+from manimlib.constants import DOWN, OUT, RIGHT
+from manimlib.constants import PI, TAU
 from manimlib.utils.iterables import adjacent_pairs
 from manimlib.utils.simple_functions import clip
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Callable, Iterable, Sequence
+
+    import numpy.typing as npt
 
 
 def cross(v1: np.ndarray, v2: np.ndarray) -> list[np.ndarray]:
@@ -150,7 +154,9 @@ def angle_between_vectors(v1: np.ndarray, v2: np.ndarray) -> float:
     """
     n1 = get_norm(v1)
     n2 = get_norm(v2)
-    cos_angle = np.dot(v1, v2) / (n1 * n2)
+    if n1 == 0 or n2 == 0:
+        return 0
+    cos_angle = np.dot(v1, v2) / np.float64(n1 * n2)
     return math.acos(clip(cos_angle, -1, 1))
 
 
@@ -413,7 +419,16 @@ def earclip_triangulation(verts: np.ndarray, ring_ends: list[int]) -> list:
         ))
 
     chilren = [[] for i in rings]
-    for idx, i in enumerate(rings_sorted):
+    ringenum = ProgressDisplay(
+        enumerate(rings_sorted),
+        total=len(rings),
+        leave=False,
+        ascii=True if platform.system() == 'Windows' else None,
+        dynamic_ncols=True,
+        desc="SVG Triangulation",
+        delay=3,
+    )
+    for idx, i in ringenum:
         for j in rings_sorted[:idx][::-1]:
             if is_in_fast(i, j):
                 chilren[j].append(i)

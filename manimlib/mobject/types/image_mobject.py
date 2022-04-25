@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 from PIL import Image
 
-from manimlib.constants import *
+from manimlib.constants import DL, DR, UL, UR
 from manimlib.mobject.mobject import Mobject
 from manimlib.utils.bezier import inverse_interpolate
 from manimlib.utils.images import get_full_raster_image_path
@@ -48,6 +48,9 @@ class ImageMobject(Mobject):
     def set_opacity(self, opacity: float, recurse: bool = True):
         for mob in self.get_family(recurse):
             mob.data["opacity"] = np.array([[o] for o in listify(opacity)])
+        return self
+
+    def set_color(self, color, opacity=None, recurse=None):
         return self
 
     def point_to_rgb(self, point: np.ndarray) -> np.ndarray:

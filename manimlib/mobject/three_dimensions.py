@@ -2,19 +2,23 @@ from __future__ import annotations
 
 import math
 
-from manimlib.constants import *
-from manimlib.mobject.types.surface import Surface
+import numpy as np
+
+from manimlib.constants import BLUE, BLUE_D, BLUE_E
+from manimlib.constants import IN, ORIGIN, OUT, RIGHT
+from manimlib.constants import PI, TAU
 from manimlib.mobject.types.surface import SGroup
+from manimlib.mobject.types.surface import Surface
 from manimlib.mobject.types.vectorized_mobject import VGroup
 from manimlib.mobject.types.vectorized_mobject import VMobject
-from manimlib.mobject.geometry import Square
 from manimlib.mobject.geometry import Polygon
+from manimlib.mobject.geometry import Square
 from manimlib.utils.bezier import interpolate
 from manimlib.utils.config_ops import digest_config
 from manimlib.utils.iterables import adjacent_pairs
+from manimlib.utils.space_ops import compass_directions
 from manimlib.utils.space_ops import get_norm
 from manimlib.utils.space_ops import z_to_vector
-from manimlib.utils.space_ops import compass_directions
 
 
 class SurfaceMesh(VGroup):
@@ -240,6 +244,13 @@ class Cube(SGroup):
         return Square3D(resolution=self.square_resolution)
 
 
+class Prism(Cube):
+    def __init__(self, width: float = 3.0, height: float = 2.0, depth: float = 1.0, **kwargs):
+        super().__init__(**kwargs)
+        for dim, value in enumerate([width, height, depth]):
+            self.rescale_to_fit(value, dim, stretch=True)
+
+
 class VCube(VGroup):
     '''立方体，使用 2D 正方形绘制'''
     CONFIG = {
@@ -248,16 +259,23 @@ class VCube(VGroup):
         "stroke_width": 0,
         "gloss": 0.5,
         "shadow": 0.5,
+        "joint_type": "round",
     }
 
-    def __init__(self, side_length: int = 2, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, side_length: float = 2.0, **kwargs):
         face = Square(side_length=side_length)
-        face.get_triangulation()
-        self.add(*Cube.square_to_cube_faces(face))
+        super().__init__(*Cube.square_to_cube_faces(face), **kwargs)
         self.init_colors()
+        self.set_joint_type(self.joint_type)
         self.apply_depth_test()
         self.refresh_unit_normal()
+
+
+class VPrism(VCube):
+    def __init__(self, width: float = 3.0, height: float = 2.0, depth: float = 1.0, **kwargs):
+        super().__init__(**kwargs)
+        for dim, value in enumerate([width, height, depth]):
+            self.rescale_to_fit(value, dim, stretch=True)
 
 
 class Dodecahedron(VGroup):
@@ -310,23 +328,9 @@ class Dodecahedron(VGroup):
         #         self.add(pentagon2.copy().apply_matrix(matrix, about_point=ORIGIN))
 
 
-class Prism(Cube):
-    '''
-    四棱柱（数组 dimensions 为每维上的长度）
-    '''
-    CONFIG = {
-        "dimensions": [3, 2, 1]
-    }
-
-    def init_points(self) -> None:
-        Cube.init_points(self)
-        for dim, value in enumerate(self.dimensions):
-            self.rescale_to_fit(value, dim, stretch=True)
-
-
 class Prismify(VGroup):
     CONFIG = {
-        "apply_depth_test": True
+        "apply_depth_test": True,
     }
 
     def __init__(self, vmobject, depth=1.0, direction=IN, **kwargs):

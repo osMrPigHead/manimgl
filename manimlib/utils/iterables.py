@@ -1,12 +1,16 @@
 from __future__ import annotations
 
-import itertools as it
-from typing import Callable, Iterable, Sequence, TypeVar
+from colour import Color
 
 import numpy as np
 
-T = TypeVar("T")
-S = TypeVar("S")
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Callable, Iterable, Sequence, TypeVar
+
+    T = TypeVar("T")
+    S = TypeVar("S")
 
 
 def remove_list_redundancies(l: Iterable[T]) -> list[T]:
@@ -34,10 +38,6 @@ def list_update(l1: Iterable[T], l2: Iterable[T]) -> list[T]:
 
 def list_difference_update(l1: Iterable[T], l2: Iterable[T]) -> list[T]:
     return [e for e in l1 if e not in l2]
-
-
-def all_elements_are_instances(iterable: Iterable, Class: type) -> bool:
-    return all([isinstance(e, Class) for e in iterable])
 
 
 def adjacent_n_tuples(objects: Iterable[T], n: int) -> zip[tuple[T, T]]:
@@ -81,7 +81,7 @@ def batch_by_property(
     return batch_prop_pairs
 
 
-def listify(obj) -> list:
+def listify(obj: object) -> list:
     if isinstance(obj, str):
         return [obj]
     try:
@@ -133,36 +133,19 @@ def make_even(
     )
 
 
-def make_even_by_cycling(
-    iterable_1: Iterable[T],
-    iterable_2: Iterable[S]
-) -> tuple[list[T], list[S]]:
-    length = max(len(iterable_1), len(iterable_2))
-    cycle1 = it.cycle(iterable_1)
-    cycle2 = it.cycle(iterable_2)
-    return (
-        [next(cycle1) for x in range(length)],
-        [next(cycle2) for x in range(length)]
-    )
-
-
-def remove_nones(sequence: Iterable) -> list:
-    return [x for x in sequence if x]
-
-
-# Note this is redundant with it.chain
-
-
-def concatenate_lists(*list_of_lists):
-    return [item for l in list_of_lists for item in l]
-
-
 def hash_obj(obj: object) -> int:
     if isinstance(obj, dict):
-        new_obj = {k: hash_obj(v) for k, v in obj.items()}
-        return hash(tuple(frozenset(sorted(new_obj.items()))))
+        return hash(tuple(sorted([
+            (hash_obj(k), hash_obj(v)) for k, v in obj.items()
+        ])))
 
-    if isinstance(obj, (set, tuple, list)):
+    if isinstance(obj, set):
+        return hash(tuple(sorted(hash_obj(e) for e in obj)))
+
+    if isinstance(obj, (tuple, list)):
         return hash(tuple(hash_obj(e) for e in obj))
+
+    if isinstance(obj, Color):
+        return hash(obj.get_rgb())
 
     return hash(obj)

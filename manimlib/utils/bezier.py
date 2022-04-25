@@ -1,19 +1,26 @@
 from __future__ import annotations
 
-from typing import Iterable, Callable, TypeVar, Sequence
-
-from scipy import linalg
 import numpy as np
-import numpy.typing as npt
+from scipy import linalg
 
-from manimlib.utils.simple_functions import choose
-from manimlib.utils.space_ops import find_intersection
-from manimlib.utils.space_ops import cross2d
-from manimlib.utils.space_ops import midpoint
 from manimlib.logger import log
+from manimlib.utils.simple_functions import choose
+from manimlib.utils.space_ops import cross2d
+from manimlib.utils.space_ops import find_intersection
+from manimlib.utils.space_ops import midpoint
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Callable, Iterable, Sequence, TypeVar
+
+    import numpy.typing as npt
+
+    T = TypeVar("T")
+
 
 CLOSED_THRESHOLD = 0.001
-T = TypeVar("T")
+
 
 def bezier(
     points: Iterable[float | np.ndarray]
@@ -80,21 +87,25 @@ def partial_quadratic_bezier_points(
 
 # Linear interpolation variants
 
-def interpolate(start: T, end: T, alpha: float) -> T:
+
+def interpolate(start: T, end: T, alpha: np.ndarray | float) -> T:
     try:
-        if isinstance(alpha, float):
-            return (1 - alpha) * start + alpha * end
-        # Otherwise, assume alpha is a list or array, and return
-        # an appropriated shaped array of all corresponding
-        # interpolations
-        result = np.outer(1 - alpha, start) + np.outer(alpha, end)
-        return result.reshape((*np.shape(alpha), *np.shape(start)))
+        return (1 - alpha) * start + alpha * end
     except TypeError:
         log.debug(f"`start` parameter with type `{type(start)}` and dtype `{start.dtype}`")
         log.debug(f"`end` parameter with type `{type(end)}` and dtype `{end.dtype}`")
         log.debug(f"`alpha` parameter with value `{alpha}`")
         import sys
         sys.exit(2)
+
+
+def outer_interpolate(
+    start: np.ndarray | float,
+    end: np.ndarray | float,
+    alpha: np.ndarray | float,
+) -> T:
+    result = np.outer(1 - alpha, start) + np.outer(alpha, end)
+    return result.reshape((*np.shape(alpha), *np.shape(start)))
 
 
 def set_array_by_interpolation(
