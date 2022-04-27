@@ -29,7 +29,7 @@ from manimlib.mobject.types.vectorized_mobject import VMobject
 from manimlib.scene.scene_file_writer import SceneFileWriter
 from manimlib.utils.config_ops import digest_config
 from manimlib.utils.family_ops import extract_mobject_family_members
-from manimlib.utils.family_ops import restructure_list_to_exclude_certain_family_members
+from manimlib.utils.iterables import list_difference_update
 
 from typing import TYPE_CHECKING
 
@@ -65,7 +65,7 @@ class Scene(object):
         "presenter_mode": False,
         "linger_after_completion": True,
         "pan_sensitivity": 3,
-        "max_num_saved_states": 20,
+        "max_num_saved_states": 50,
     }
 
     def __init__(self, **kwargs):
@@ -189,10 +189,7 @@ class Scene(object):
         # Enables gui interactions during the embed
         def inputhook(context):
             while not context.input_is_ready():
-                if self.window.is_closing:
-                    pass
-                    # self.window.destroy()
-                else:
+                if not self.window.is_closing:
                     self.update_frame(dt=0)
 
         pt_inputhooks.register("manim", inputhook)
@@ -201,6 +198,7 @@ class Scene(object):
         # Operation to run after each ipython command
         def post_cell_func(*args, **kwargs):
             self.refresh_static_mobjects()
+            self.save_state()
 
         shell.events.register("post_run_cell", post_cell_func)
 
@@ -313,11 +311,30 @@ class Scene(object):
         ))
         return self
 
-    def remove(self, *mobjects_to_remove: Mobject):
-        '''从场景中移除某个指定的 Mobject '''
-        self.mobjects = restructure_list_to_exclude_certain_family_members(
-            self.mobjects, mobjects_to_remove
-        )
+    def replace(self, mobject: Mobject, *replacements: Mobject):
+        if mobject in self.mobjects:
+            index = self.mobjects.index(mobject)
+            self.mobjects = [
+                *self.mobjects[:index],
+                *replacements,
+                *self.mobjects[index + 1:]
+            ]
+        return self
+
+    def remove(self, *mobjects: Mobject):
+        """
+        从场景中移除所有给定的 mobject ，如果传入的 mobject 在一个 Group 中，那么这个物件会被移除，
+        同在该 Group 的其他成员会重新被加载到场景中（但不会重新加载到 Group 中）。
+
+        例如我们有 ``Group(m1, m2, m3)`` ，当场景调用了 ``scene.remove(m1)`` ，那么得到的结果为
+        场景中剩余的是未组合的 ``m2`` 和 ``m3``
+        """
+        for mob in mobjects:
+            # First restructure self.mobjects so that parents/grandparents/etc. are replaced
+            # with their children, likewise for all ancestors in the extended family.
+            for ancestor in mob.get_ancestors(extended=True):
+                self.replace(ancestor, *ancestor.submobjects)
+            self.mobjects = list_difference_update(self.mobjects, mob.get_family())
         return self
 
     def bring_to_front(self, *mobjects: Mobject):
@@ -532,6 +549,7 @@ class Scene(object):
         def wrapper(self, *args, **kwargs):
             if self.inside_embed:
                 self.save_state()
+
             self.update_skipping_status()
             should_write = not self.skip_animations
             if should_write:
@@ -546,6 +564,9 @@ class Scene(object):
 
             if should_write:
                 self.file_writer.end_animation()
+
+            if self.inside_embed:
+                self.save_state()
 
             self.num_plays += 1
         return wrapper
@@ -605,10 +626,10 @@ class Scene(object):
         ignore_presenter_mode: bool = False
     ):
         '''等待一段时间'''
-        if note:
-            log.info(note)
         self.update_mobjects(dt=0)  # Any problems with this?
         if self.presenter_mode and not self.skip_animations and not ignore_presenter_mode:
+            if note:
+                log.info(note)
             while self.hold_on_wait:
                 self.update_frame(dt=1 / self.camera.frame_rate)
             self.hold_on_wait = True
@@ -657,8 +678,22 @@ class Scene(object):
 
     # Helpers for interactive development
 
-    def get_state(self) -> list[tuple[Mobject, Mobject]]:
-        return [(mob, mob.copy()) for mob in self.mobjects]
+    def get_state(self) -> tuple[list[tuple[Mobject, Mobject]], int]:
+        if self.undo_stack:
+            last_state = dict(self.undo_stack[-1])
+        else:
+            last_state = {}
+        result = []
+        n_changes = 0
+        for mob in self.mobjects:
+            # If it hasn't changed since the last state, just point to the
+            # same copy as before
+            if mob in last_state and last_state[mob].looks_identical(mob):
+                result.append((mob, last_state[mob]))
+            else:
+                result.append((mob, mob.copy()))
+                n_changes += 1
+        return result, n_changes
 
     def restore_state(self, mobject_states: list[tuple[Mobject, Mobject]]):
         self.mobjects = [mob.become(mob_copy) for mob, mob_copy in mobject_states]
@@ -668,19 +703,23 @@ class Scene(object):
         if not self.preview:
             return
         self.redo_stack = []
-        self.undo_stack.append(self.get_state())
-        if len(self.undo_stack) > self.max_num_saved_states:
-            self.undo_stack.pop(0)
+        state, n_changes = self.get_state()
+        if n_changes > 0:
+            self.undo_stack.append(state)
+            if len(self.undo_stack) > self.max_num_saved_states:
+                self.undo_stack.pop(0)
 
     def undo(self):
         if self.undo_stack:
-            self.redo_stack.append(self.get_state())
+            state, n_changes = self.get_state()
+            self.redo_stack.append(state)
             self.restore_state(self.undo_stack.pop())
         self.refresh_static_mobjects()
 
     def redo(self):
         if self.redo_stack:
-            self.undo_stack.append(self.get_state())
+            state, n_changes = self.get_state()
+            self.undo_stack.append(state)
             self.restore_state(self.redo_stack.pop())
         self.refresh_static_mobjects()
 
