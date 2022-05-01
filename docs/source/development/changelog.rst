@@ -4,62 +4,62 @@
 v1.6.1
 ------
 
-Fixed bugs
+修复 Bug
 ^^^^^^^^^^
-- Fixed the bug of ``MTex`` with multi-line tex string (`#1785 <https://github.com/3b1b/manim/pull/1785>`__)
-- Fixed ``interpolate`` (`#1788 <https://github.com/3b1b/manim/pull/1788>`__)
-- Fixed ``ImageMobject`` (`#1791 <https://github.com/3b1b/manim/pull/1791>`__)
+- 修复 ``MTex`` 多行 tex 的 bug (`#1785 <https://github.com/3b1b/manim/pull/1785>`__)
+- 修复 ``interpolate`` (`#1788 <https://github.com/3b1b/manim/pull/1788>`__)
+- 修复 ``ImageMobject`` (`#1791 <https://github.com/3b1b/manim/pull/1791>`__)
 
-Refactor
+重构
 ^^^^^^^^
-- Added ``\overset`` as a special string in ``Tex`` (`#1783 <https://github.com/3b1b/manim/pull/1783>`__)
-- Added ``outer_interpolate`` to perform interpolation using ``np.outer`` on arrays (`#1788 <https://github.com/3b1b/manim/pull/1788>`__)
+- 将 ``\overset`` 作为 ``Tex`` 的一个特殊的符号 (`#1783 <https://github.com/3b1b/manim/pull/1783>`__)
+- 添加 ``outer_interpolate`` 方法对数组使用 ``np.outer`` 方法 (`#1788 <https://github.com/3b1b/manim/pull/1788>`__)
 
 v1.6.0
 ------
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-- **Python 3.6 is no longer supported** (`#1736 <https://github.com/3b1b/manim/pull/1736>`__)
+- **Python 3.6 不再支持** (`#1736 <https://github.com/3b1b/manim/pull/1736>`__)
 
-Fixed bugs
+修复 Bug
 ^^^^^^^^^^
-- Fixed the width of riemann rectangles (`#1762 <https://github.com/3b1b/manim/pull/1762>`__)
-- Bug fixed in cases where empty array is passed to shader (`#1764 <https://github.com/3b1b/manim/pull/1764/commits/fa38b56fd87f713657c7f778f39dca7faf15baa8>`__)
-- Fixed ``AddTextWordByWord`` (`#1772 <https://github.com/3b1b/manim/pull/1772>`__)
-- Fixed ``ControlsExample`` (`#1781 <https://github.com/3b1b/manim/pull/1781>`__)
+- 修复黎曼矩形的宽度问题 (`#1762 <https://github.com/3b1b/manim/pull/1762>`__)
+- 修复空数组传入 shader 的 bug (`#1764 <https://github.com/3b1b/manim/pull/1764/commits/fa38b56fd87f713657c7f778f39dca7faf15baa8>`__)
+- 修复 ``AddTextWordByWord`` (`#1772 <https://github.com/3b1b/manim/pull/1772>`__)
+- 修复 ``ControlsExample`` (`#1781 <https://github.com/3b1b/manim/pull/1781>`__)
 
 
-New features
+新 Bug
 ^^^^^^^^^^^^
-- Added more functions to ``Text`` (details: `#1751 <https://github.com/3b1b/manim/pull/1751>`__)
-- Allowed ``interpolate`` to work on an array of alpha values (`#1764 <https://github.com/3b1b/manim/pull/1764/commits/bf2d9edfe67c7e63ac0107d1d713df7ae7c3fb8f>`__)
-- Allowed ``Numberline.number_to_point`` and ``CoordinateSystem.coords_to_point`` to work on an array of inputs (`#1764 <https://github.com/3b1b/manim/pull/1764/commits/c3e13fff0587d3bb007e71923af7eaf9e4926560>`__)
-- Added a basic ``Prismify`` to turn a flat ``VMobject`` into something with depth (`#1764 <https://github.com/3b1b/manim/pull/1764/commits/f249da95fb65ed5495cd1db1f12ece7e90061af6>`__)
-- Added ``GlowDots``, analogous to ``GlowDot`` (`#1764 <https://github.com/3b1b/manim/pull/1764/commits/e19f35585d817e74b40bc30b1ab7cee84b24da05>`__)
-- Added ``TransformMatchingStrings`` which is compatible with ``Text`` and ``MTex`` (`#1772 <https://github.com/3b1b/manim/pull/1772>`__)
-- Added support for ``substring`` and ``case_sensitive`` parameters for ``LabelledString.get_parts_by_string`` (`#1780 <https://github.com/3b1b/manim/pull/1780>`__) 
+- 给 ``Text`` 添加了更多方法 (details: `#1751 <https://github.com/3b1b/manim/pull/1751>`__)
+- 允许 ``interpolate`` 作用于一组 alpha 上 (`#1764 <https://github.com/3b1b/manim/pull/1764/commits/bf2d9edfe67c7e63ac0107d1d713df7ae7c3fb8f>`__)
+- 允许 ``Numberline.number_to_point`` 和 ``CoordinateSystem.coords_to_point`` 方法作用于一系列的输入 (`#1764 <https://github.com/3b1b/manim/pull/1764/commits/c3e13fff0587d3bb007e71923af7eaf9e4926560>`__)
+- 添加基本图形 ``Prismify``，将平面图形 ``VMobject`` 转变为带有深度的图形 (`#1764 <https://github.com/3b1b/manim/pull/1764/commits/f249da95fb65ed5495cd1db1f12ece7e90061af6>`__)
+- 添加 ``GlowDots``,  与 ``GlowDot`` 类似 (`#1764 <https://github.com/3b1b/manim/pull/1764/commits/e19f35585d817e74b40bc30b1ab7cee84b24da05>`__)
+- 添加 ``TransformMatchingStrings`` 动画类，同时适用于 ``Text`` 和 ``MTex`` (`#1772 <https://github.com/3b1b/manim/pull/1772>`__)
+- 给 ``LabelledString.get_parts_by_string`` 添加 ``substring`` 和 ``case_sensitive`` 的参数支持 (`#1780 <https://github.com/3b1b/manim/pull/1780>`__) 
 
 
-Refactor
+重构
 ^^^^^^^^
-- Added type hints (`#1736 <https://github.com/3b1b/manim/pull/1736>`__)
-- Specifid UTF-8 encoding for tex files (`#1748 <https://github.com/3b1b/manim/pull/1748>`__)
-- Refactored ``Text`` with the latest manimpango (`#1751 <https://github.com/3b1b/manim/pull/1751>`__)
-- Reorganized getters for ``ParametricCurve`` (`#1757 <https://github.com/3b1b/manim/pull/1757>`__)
-- Refactored ``CameraFrame`` to use ``scipy.spatial.transform.Rotation`` (`#1764 <https://github.com/3b1b/manim/pull/1764/commits/625460467fdc01fc1b6621cbb3d2612195daedb9>`__)
-- Refactored rotation methods to use ``scipy.spatial.transform.Rotation`` (`#1764 <https://github.com/3b1b/manim/pull/1764/commits/7bf3615bb15cc6d15506d48ac800a23313054c8e>`__)
-- Used ``stroke_color`` to init ``Arrow`` (`#1764 <https://github.com/3b1b/manim/pull/1764/commits/c0b7b55e49f06b75ae133b5a810bebc28c212cd6>`__)
-- Refactored ``Mobject.set_rgba_array_by_color`` (`#1764 <https://github.com/3b1b/manim/pull/1764/commits/8b1f0a8749d91eeda4b674ed156cbc7f8e1e48a8>`__)
-- Made panning more sensitive to mouse movements (`#1764 <https://github.com/3b1b/manim/pull/1764/commits/9d0cc810c5fcb4252990e706c6bf880d571cb1a2>`__)
-- Added loading progress for large SVGs (`#1766 <https://github.com/3b1b/manim/pull/1766>`__)
-- Added getter/setter of ``field_of_view`` for ``CameraFrame`` (`#1770 <https://github.com/3b1b/manim/pull/1770/commits/0610f331a4f7a126a3aae34f8a2a86eabcb692f4>`__)
-- Renamed ``focal_distance`` to ``focal_dist_to_height`` and added getter/setter (`#1770 <https://github.com/3b1b/manim/pull/1770/commits/0610f331a4f7a126a3aae34f8a2a86eabcb692f4>`__)
-- Added getter and setter for ``VMobject.joint_type`` (`#1770 <https://github.com/3b1b/manim/pull/1770/commits/2a7a7ac5189a14170f883533137e8a2ae09aac41>`__)
-- Refactored ``VCube`` (`#1770 <https://github.com/3b1b/manim/pull/1770/commits/0f8d7ed59751d42d5011813ba5694ecb506082f7>`__)
-- Refactored ``Prism`` to receive ``width height depth`` instead of ``dimensions`` (`#1770 <https://github.com/3b1b/manim/pull/1770/commits/0f8d7ed59751d42d5011813ba5694ecb506082f7>`__)
-- Refactored ``Text``, ``MarkupText`` and ``MTex`` based on ``LabelledString`` (`#1772 <https://github.com/3b1b/manim/pull/1772>`__)
-- Refactored ``LabelledString`` and relevant classes (`#1779 <https://github.com/3b1b/manim/pull/1779>`__)
+- 添加类型提示 (`#1736 <https://github.com/3b1b/manim/pull/1736>`__)
+- 指定 tex 文件的 UTF-8 编码 (`#1748 <https://github.com/3b1b/manim/pull/1748>`__)
+- 使用最新版 manimpango 重构 ``Text`` (`#1751 <https://github.com/3b1b/manim/pull/1751>`__)
+- 对 ``ParametricCurve`` 的 getter 进行重组 (`#1757 <https://github.com/3b1b/manim/pull/1757>`__)
+- 使用 ``scipy.spatial.transform.Rotation`` 重构 ``CameraFrame`` (`#1764 <https://github.com/3b1b/manim/pull/1764/commits/625460467fdc01fc1b6621cbb3d2612195daedb9>`__)
+- 使用 ``scipy.spatial.transform.Rotation`` 重构 ``CameraFrame`` 的旋转方法 (`#1764 <https://github.com/3b1b/manim/pull/1764/commits/7bf3615bb15cc6d15506d48ac800a23313054c8e>`__)
+- 使用 ``stroke_color`` 来初始化 ``Arrow`` 的颜色 (`#1764 <https://github.com/3b1b/manim/pull/1764/commits/c0b7b55e49f06b75ae133b5a810bebc28c212cd6>`__)
+- 重构 ``Mobject.set_rgba_array_by_color`` (`#1764 <https://github.com/3b1b/manim/pull/1764/commits/8b1f0a8749d91eeda4b674ed156cbc7f8e1e48a8>`__)
+- 使平移对鼠标移动更敏感 (`#1764 <https://github.com/3b1b/manim/pull/1764/commits/9d0cc810c5fcb4252990e706c6bf880d571cb1a2>`__)
+- 增加了大型 SVG 图片的加载进度 (`#1766 <https://github.com/3b1b/manim/pull/1766>`__)
+- 为 ``CameraFrame`` 添加了 ``field_of_view`` 的 getter/setter (`#1770 <https://github.com/3b1b/manim/pull/1770/commits/0610f331a4f7a126a3aae34f8a2a86eabcb692f4>`__)
+- 重命名 ``focal_distance`` 为 ``focal_dist_to_height`` 并添加 getter/setter (`#1770 <https://github.com/3b1b/manim/pull/1770/commits/0610f331a4f7a126a3aae34f8a2a86eabcb692f4>`__)
+- 为 ``VMobject.joint_type`` 添加 getter/setter (`#1770 <https://github.com/3b1b/manim/pull/1770/commits/2a7a7ac5189a14170f883533137e8a2ae09aac41>`__)
+- 重构 ``VCube`` (`#1770 <https://github.com/3b1b/manim/pull/1770/commits/0f8d7ed59751d42d5011813ba5694ecb506082f7>`__)
+- 重构 ``Prism``，接收 ``width height depth`` 而不是 ``dimensions`` (`#1770 <https://github.com/3b1b/manim/pull/1770/commits/0f8d7ed59751d42d5011813ba5694ecb506082f7>`__)
+- 基于 ``LabelledString`` 重构 ``Text``, ``MarkupText`` 和 ``MTex`` (`#1772 <https://github.com/3b1b/manim/pull/1772>`__)
+- 重构 ``LabelledString`` 和相关的类 (`#1779 <https://github.com/3b1b/manim/pull/1779>`__)
 
 
 v1.5.0
