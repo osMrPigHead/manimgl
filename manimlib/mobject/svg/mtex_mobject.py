@@ -154,17 +154,21 @@ class MTex(StringMobject):
     # Method alias
 
     def get_parts_by_tex(self, selector: Selector) -> VGroup:
+        """``select_parts`` 的别名"""
         return self.select_parts(selector)
 
     def get_part_by_tex(self, selector: Selector) -> VGroup:
+        """``select_part`` 的别名"""
         return self.select_part(selector)
 
     def set_color_by_tex(self, selector: Selector, color: ManimColor):
+        """``set_parts_color`` 的别名"""
         return self.set_parts_color(selector, color)
 
     def set_color_by_tex_to_color_map(
         self, color_map: dict[Selector, ManimColor]
     ):
+        """``set_parts_color_by_dict`` 的别名"""
         return self.set_parts_color_by_dict(color_map)
 
     def get_tex(self) -> str:

@@ -512,18 +512,22 @@ class StringMobject(SVGMobject, ABC):
         ])
 
     def select_parts(self, selector: Selector) -> VGroup:
+        """选择各个 ``selector`` 完全覆盖的预指定子串对应的非空物件组构成的 ``VGroup``"""
         return self.build_parts_from_indices_lists(
             self.get_submob_indices_lists_by_selector(selector)
         )
 
     def select_part(self, selector: Selector, index: int = 0) -> VGroup:
+        """选择 ``select_parts(selector)`` 中的第 ``index`` 个物件组"""
         return self.select_parts(selector)[index]
 
     def set_parts_color(self, selector: Selector, color: ManimColor):
+        """对 ``selector`` 对应的物件染色"""
         self.select_parts(selector).set_color(color)
         return self
 
     def set_parts_color_by_dict(self, color_map: dict[Selector, ManimColor]):
+        """通过字典批量上色"""
         for selector, color in color_map.items():
             self.set_parts_color(selector, color)
         return self
