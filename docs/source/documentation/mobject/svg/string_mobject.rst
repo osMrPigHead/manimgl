@@ -10,18 +10,19 @@ StringMobject
 :class:`~manimlib.mobject.svg.text_mobject.MarkupText` 的 ``t2c`` 字典键等）也可以指定子串，
 
 该文件定义了 ``Selector`` 类型如下：
-``
-Selector = Union[
-    str,
-    re.Pattern,
-    tuple[Union[int, None], Union[int, None]],
-    Iterable[Union[
+
+.. code-block:: python
+
+    Selector = Union[
         str,
         re.Pattern,
-        tuple[Union[int, None], Union[int, None]]
-    ]]
-]
-``
+        tuple[Union[int, None], Union[int, None]],
+        Iterable[Union[
+            str,
+            re.Pattern,
+            tuple[Union[int, None], Union[int, None]]
+        ]]
+    ]
 
 可以通过以下任意一种或多种方式指定子串（详情请参阅各个子类）：
 

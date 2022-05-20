@@ -21,7 +21,7 @@ MTex
 下面给出用不同方式指定子串的示例：
 
 .. manim-example:: MTexSpecifySubstrings
-  :media: https://fastly.jsdelivr.net/gh/manim-kindergarten/CDN@master/manim_assets/image/Text/image1.png
+  :media: https://fastly.jsdelivr.net/gh/manim-kindergarten/CDN@master/manimgl_assets/mobject/svg/mtex/MTexSpecifySubstrings.png
   
   class MTexSpecifySubstrings(Scene): 
       def construct(self):

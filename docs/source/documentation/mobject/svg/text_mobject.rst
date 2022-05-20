@@ -36,8 +36,8 @@ Text
 
 一些示例如下：
 
-.. manim-example:: TextDemo
-  :media: https://fastly.jsdelivr.net/gh/manim-kindergarten/CDN@master/manim_assets/image/Text/image1.png
+.. manim-example:: TextExample
+  :media: https://fastly.jsdelivr.net/gh/manim-kindergarten/CDN@master/manimgl_assets/mobject/svg/text/TextExample.png
 
   from manimlib.imports import *
   
@@ -48,11 +48,11 @@ Text
 
 
 .. manim-example:: TextSlice
-  :media: https://fastly.jsdelivr.net/gh/manim-kindergarten/CDN@master/manim_assets/image/Text/image14.png
+  :media: https://fastly.jsdelivr.net/gh/manim-kindergarten/CDN@master/manimgl_assets/mobject/svg/text/TextSlice.png
 
   from manimlib.imports import *
   
-  class TextColorExample(Scene): 
+  class TextSlice(Scene): 
       def construct(self):
           text = Text(
               'Google', 
@@ -61,12 +61,14 @@ Text
                   (2,3):'#fbb003', (3,4):'#3174f0', 
                   (4,5):'#269a43', (5,None):'#e53125',
               }
+              # 注：当前可能还有 bug，None 和数值不能比较
+              # 可暂时将这里的 None 改为 0 或字符串的长度
           )
           self.add(text)
 
 
 .. manim-example:: TextUTF8
-  :media: https://fastly.jsdelivr.net/gh/manim-kindergarten/CDN@master/manim_assets/image/Text/image15.png
+  :media: https://fastly.jsdelivr.net/gh/manim-kindergarten/CDN@master/manimgl_assets/mobject/svg/text/MultilingualTextExample.png
 
   from manimlib.imports import *
   
