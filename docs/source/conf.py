@@ -24,7 +24,7 @@ extensions = [
 ]
 
 autoclass_content = 'both'
-mathjax_path = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+mathjax_path = "https://fastly.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
 
 templates_path = ['_templates']
 source_suffix = '.rst'
@@ -35,8 +35,8 @@ pygments_style = 'default'
 
 html_static_path = ["_static"]
 html_css_files = [
-    "https://cdn.jsdelivr.net/gh/manim-kindergarten/CDN@master/manimgl_assets/custom.css", 
-    "https://cdn.jsdelivr.net/gh/manim-kindergarten/CDN@master/manimgl_assets/colors.css"
+    "https://fastly.jsdelivr.net/gh/manim-kindergarten/CDN@master/manimgl_assets/custom.css", 
+    "https://fastly.jsdelivr.net/gh/manim-kindergarten/CDN@master/manimgl_assets/colors.css"
 ]
 html_theme = 'furo'  # pip install furo==2020.10.5b9
 html_favicon = '_static/mk.png'
