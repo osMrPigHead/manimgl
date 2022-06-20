@@ -49,10 +49,16 @@ class CameraFrame(Mobject):
         self.move_to(self.center_point)
 
     def set_orientation(self, rotation: Rotation):
+        '''
+        设置相机旋转（使用四元数）
+        '''
         self.uniforms["orientation"][:] = rotation.as_quat()
         return self
 
     def get_orientation(self):
+        '''
+        获取相机旋转
+        '''
         return Rotation.from_quat(self.uniforms["orientation"])
 
     def to_default_state(self):
@@ -64,15 +70,27 @@ class CameraFrame(Mobject):
         return self
 
     def get_euler_angles(self):
+        '''
+        获取相机的欧拉角
+        '''
         return self.get_orientation().as_euler("zxz")[::-1]
 
     def get_theta(self):
+        '''
+        获取相机的欧拉角的 theta 值
+        '''
         return self.get_euler_angles()[0]
 
     def get_phi(self):
+        '''
+        获取相机的欧拉角的 phi 值
+        '''
         return self.get_euler_angles()[1]
 
     def get_gamma(self):
+        '''
+        获取相机的欧拉角的 gamma 值
+        '''
         return self.get_euler_angles()[2]
 
     def get_inverse_camera_rotation_matrix(self):
@@ -90,6 +108,9 @@ class CameraFrame(Mobject):
         gamma: float | None = None,
         units: float = RADIANS
     ):
+        '''
+        设置相机的欧拉角
+        '''
         eulers = self.get_euler_angles()  # theta, phi, gamma
         for i, var in enumerate([theta, phi, gamma]):
             if var is not None:
@@ -104,72 +125,114 @@ class CameraFrame(Mobject):
         gamma_degrees: float | None = None,
     ):
         """
-        set_euler_angles 的另一种写法
+        设置相机的欧拉角, set_euler_angles 的另一种写法
         """
         self.set_euler_angles(theta_degrees, phi_degrees, gamma_degrees, units=DEGREES)
         return self
 
     def set_theta(self, theta: float):
+        '''
+        设置相机的欧拉角的 theta 值
+        '''
         return self.set_euler_angles(theta=theta)
 
     def set_phi(self, phi: float):
+        '''
+        设置相机的欧拉角的 phi 值
+        '''
         return self.set_euler_angles(phi=phi)
 
     def set_gamma(self, gamma: float):
+        '''
+        设置相机的欧拉角的 gamma 值
+        '''
         return self.set_euler_angles(gamma=gamma)
 
     def increment_theta(self, dtheta: float):
+        '''
+        增加相机的欧拉角的 theta 值
+        '''
         self.rotate(dtheta, OUT)
         return self
 
     def increment_phi(self, dphi: float):
+        '''
+        增加相机的欧拉角的 phi 值
+        '''
         self.rotate(dphi, self.get_inverse_camera_rotation_matrix()[0])
         return self
 
     def increment_gamma(self, dgamma: float):
+        '''
+        增加相机的欧拉角的 gamma 值
+        '''
         self.rotate(dgamma, self.get_inverse_camera_rotation_matrix()[2])
         return self
 
     def set_focal_distance(self, focal_distance: float):
+        '''
+        设置相机的焦距
+        '''
         self.uniforms["focal_dist_to_height"] = focal_distance / self.get_height()
         return self
 
     def set_field_of_view(self, field_of_view: float):
+        '''
+        设置相机的视野
+        '''
         self.uniforms["focal_dist_to_height"] = 2 * math.tan(field_of_view / 2)
         return self
 
     def get_shape(self):
-        '''获取相机宽高'''
+        '''获取相机帧宽高'''
         return (self.get_width(), self.get_height())
 
     def get_center(self) -> np.ndarray:
+        '''
+        获取相机的中心坐标
+        '''
         # Assumes first point is at the center
         return self.get_points()[0]
 
     def get_width(self) -> float:
+        '''
+        获取相机的宽度
+        '''
         points = self.get_points()
         return points[2, 0] - points[1, 0]
 
     def get_height(self) -> float:
+        '''
+        获取相机的高度
+        '''
         points = self.get_points()
         return points[4, 1] - points[3, 1]
 
     def get_focal_distance(self) -> float:
+        '''
+        获取相机的焦距
+        '''
         return self.uniforms["focal_dist_to_height"] * self.get_height()
 
     def get_field_of_view(self) -> float:
+        '''
+        获取相机的视野
+        '''
         return 2 * math.atan(self.uniforms["focal_dist_to_height"] / 2)
 
     def get_implied_camera_location(self) -> np.ndarray:
+        '''
+        获取相机的位置
+        '''
         to_camera = self.get_inverse_camera_rotation_matrix()[2]
         dist = self.get_focal_distance()
         return self.get_center() + dist * to_camera
 
 
 class Camera(object):
-    '''摄像机
-
-    `widcardw 在线瞎写，因为看不懂`'''
+    '''
+    摄像机
+    '''
     CONFIG = {
         "background_image": None,
         "frame_config": {},
@@ -221,9 +284,15 @@ class Camera(object):
         self.mob_to_render_groups = {}
 
     def init_frame(self) -> None:
+        '''
+        初始化相机帧
+        '''
         self.frame = CameraFrame(**self.frame_config)
 
     def init_context(self, ctx: moderngl.Context | None = None) -> None:
+        '''
+        初始化上下文
+        '''
         if ctx is None:
             ctx = moderngl.create_standalone_context()
             fbo = self.get_fbo(ctx, 0)
@@ -239,6 +308,9 @@ class Camera(object):
         self.fbo_msaa = fbo_msaa
 
     def set_ctx_blending(self, enable: bool = True) -> None:
+        '''
+        设置上下文混合
+        '''
         if enable:
             self.ctx.enable(moderngl.BLEND)
         else:
@@ -249,6 +321,9 @@ class Camera(object):
         )
 
     def set_ctx_depth_test(self, enable: bool = True) -> None:
+        '''
+        设置上下文深度测试
+        '''
         if enable:
             self.ctx.enable(moderngl.DEPTH_TEST)
         else:
@@ -361,6 +436,9 @@ class Camera(object):
         return self.frame.get_center()
 
     def get_location(self) -> tuple[float, float, float]:
+        '''
+        获取相机位置
+        '''
         return self.frame.get_implied_camera_location()
 
     def resize_frame_shape(self, fixed_dimension: bool = False) -> None:

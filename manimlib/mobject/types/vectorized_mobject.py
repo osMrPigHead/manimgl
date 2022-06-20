@@ -108,8 +108,9 @@ class VMobject(Mobject):
           
         - ``gloss`` 光泽
         - ``shadow`` 阴影
+        - ``reflectiveness`` 反光度
 
-        其中，opacity, width 等属性均可以为一个列表，在渲染时会按照列表对其进行补间
+        其中， color, opacity, width 属性均可以为一个列表，在渲染时会按照列表对其进行补间
         """
         self.needs_new_triangulation = True
         self.triangulation = np.zeros(0, dtype='i4')
