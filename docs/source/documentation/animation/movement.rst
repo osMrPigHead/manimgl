@@ -13,7 +13,7 @@ Homotopy
     :members:
     
 .. manim-example:: HomotopyExample
-  :media: ../../_static/HomotopyExample.mp4
+  :media: https://fastly.jsdelivr.net/gh/manim-kindergarten/CDN@master/manimgl_assets/animations/movement/HomotopyExample.mp4
 
   class HomotopyExample(Scene):
       def construct(self):
