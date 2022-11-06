@@ -35,8 +35,8 @@ pygments_style = 'default'
 
 html_static_path = ["_static"]
 html_css_files = [
-    "https://fastly.jsdelivr.net/gh/manim-kindergarten/CDN@master/manimgl_assets/custom.css", 
-    "https://fastly.jsdelivr.net/gh/manim-kindergarten/CDN@master/manimgl_assets/colors.css"
+    "https://mkcdn.tonycrane.cc/manimgl_assets/custom.css", 
+    "https://mkcdn.tonycrane.cc/manimgl_assets/colors.css"
 ]
 html_theme = 'furo'  # pip install furo==2020.10.5b9
 html_favicon = '_static/mk.png'
