@@ -112,7 +112,7 @@ class Flash(AnimationGroup):
         self.line_stroke_width = line_stroke_width
 
         self.lines = self.create_lines()
-        animations = self.create_line_anims()
+        animations = self.create_line_anims(**kwargs)
         super().__init__(
             *animations,
             group=self.lines,
@@ -134,9 +134,9 @@ class Flash(AnimationGroup):
         lines.add_updater(lambda l: l.move_to(self.point))
         return lines
 
-    def create_line_anims(self) -> list[Animation]:
+    def create_line_anims(self, **kwargs) -> list[Animation]:
         return [
-            ShowCreationThenDestruction(line)
+            ShowCreationThenDestruction(line, **kwargs)
             for line in self.lines
         ]
 
