@@ -350,7 +350,7 @@ class ApplyWave(Homotopy):
             nudge = there_and_back(t**power)
             return np.array([x, y, z]) + nudge * vect
 
-        super().__init__(homotopy, mobject, **kwargs)
+        super().__init__(homotopy, mobject, run_time=run_time, **kwargs)
 
 
 class WiggleOutThenIn(Animation):
