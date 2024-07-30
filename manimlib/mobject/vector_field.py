@@ -325,7 +325,7 @@ class AnimatedStreamLines(VGroup):
 
         self.add_updater(lambda m, dt: m.update(dt))
 
-    def update(self, dt: float) -> None:
+    def update(self, dt: float, recurse: bool = True) -> None:
         stream_lines = self.stream_lines
         for line in stream_lines:
             line.time += dt
