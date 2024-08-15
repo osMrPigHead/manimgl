@@ -45,6 +45,7 @@ ctex:
     \usepackage{physics}
     \usepackage{xcolor}
     \usepackage{microtype}
+    \usepackage{pifont}
     \linespread{1}
 
 # Simplified TeX templates
