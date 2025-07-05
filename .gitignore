@@ -150,3 +150,6 @@ dmypy.json
 # For manim
 /videos
 /custom_config.yml
+### JetBrains template
+.idea/*
+
